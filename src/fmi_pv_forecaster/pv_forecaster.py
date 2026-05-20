@@ -222,6 +222,27 @@ def __get_clearsky_radiation_for_interval(interval_start, interval_end, timestep
 
     return clearsky_estimate
 
+def get_clearsky_radiation_for_times(times):
+    """
+    Additional helper function, this returns clearsky radiation values at requested times for given location.
+    """
+
+    if site_latitude is None or site_longitude is None:
+        raise ValueError(
+            "Latitude and longitude must be defined before calling"
+            " get_clearsky_radiation_for_interval(). Call pv_forecast.set_location(latitude, longitude) first with"
+            " valid WGS84 coordinates."
+        )
+
+
+    clearsky_estimate = meps_loader.__get_irradiance_pvlib_flexible_times(site_latitude, site_longitude, times)
+
+    return clearsky_estimate
+
+
+
+
+
 
 def __get_fmi_forecast_for_interval(interval_start, interval_end):
     """
@@ -420,6 +441,31 @@ def get_clearsky_estimate_for_interval(interval_start, interval_end, timestep=60
 
     return data
 
+def get_clearsky_estimate_for_times(times):
+
+    if site_latitude is None or site_longitude is None:
+        raise ValueError(
+            "Latitude and longitude must be defined before PV output is estimated."
+            "Call pv_forecast.set_location(latitude, longitude) first with"
+            " valid WGS84 coordinates."
+        )
+
+    if panel_tilt is None or panel_azimuth is None:
+        raise ValueError(
+            "Tilt and azimuth must be defined before PV output is estimated."
+            " Call pv_forecast.set_angles(tilt, azimuth) first with"
+            " valid 0-90, 0-360 degree panel angles."
+        )
+
+    # step 1. getting clearsky radiation
+    data = get_clearsky_radiation_for_times(times)
+
+    # processing data with our pv model
+    data = process_radiation_df(data)
+
+    return data
+
+
 
 def get_fmi_forecast_at_interpolated_time(given_time):
     fmi_power_forecast = get_default_fmi_forecast()
@@ -443,14 +489,16 @@ def process_radiation_df_bifacial(data_in):
     Since weather at 18:00 represents weather between 17:00 and 18:00, the time column is often index-30min
     """
 
-    if "cloud_cover" not in data_in.columns:
+    data = data_in.copy()
+
+    if "cloud_cover" not in data.columns:
         # If using pvlib clearsky data, there will not be a cloud cover column. Added here for compatibility.
-        data_in["cloud_cover"] = 0
+        data["cloud_cover"] = 0
 
     # panel main surface:
-    data_a = data_in.copy()
+    data_a = data.copy()
     # panel back surface:
-    data_b = data_in.copy()
+    data_b = data.copy()
 
     if panel_tilt is None or panel_azimuth is None:
         raise ValueError(
@@ -461,11 +509,6 @@ def process_radiation_df_bifacial(data_in):
 
 
 
-    print("########### phase 1:")
-    print("data a:")
-    print_full(data_b)
-    print("data b:")
-    print_full(data_b)
 
     # step 2. project irradiance components to plane of array:
     # panel front surface, same as always
@@ -474,26 +517,15 @@ def process_radiation_df_bifacial(data_in):
 
 
 
-
-
     # panel back surface, requires recomputation of panel angles
     azimuth_b = panel_azimuth
     tilt_b = 180- panel_tilt
 
-    print("azimuth_b: " + str(azimuth_b))
-    print("tilt_b: " + str(tilt_b))
+    #print("azimuth_b: " + str(azimuth_b))
+    #print("tilt_b: " + str(tilt_b))
     data_b = irradiance_transpositions.irradiance_df_to_poa_df(data_b, site_latitude, site_longitude, tilt_b,
                                                              azimuth_b)
 
-    print("########### phase 2:")
-    print("tilt_a: " + str(panel_tilt))
-    print("azimuth_a: " + str(panel_azimuth))
-    print("data a:")
-    print_full(data_b)
-    print("azimuth_b: " + str(azimuth_b))
-    print("tilt_b: " + str(tilt_b))
-    print("data b:")
-    print_full(data_b)
 
     # step 3. simulate how much of irradiance components is absorbed:
     data_a = reflection_estimator.add_reflection_corrected_poa_components_to_df(data_a, site_latitude, site_longitude,
@@ -503,39 +535,58 @@ def process_radiation_df_bifacial(data_in):
                                                                               tilt_b, azimuth_b)
 
 
-
-
-
     # step 4. compute sum of reflection-corrected components:
-    data_a = reflection_estimator.add_reflection_corrected_poa_to_df(data_a)
+    if "poa_ref_cor" in data_a.columns:
+        #print("Reflection corrected POA already in dataframe, using it.")
+        pass
+    else:
+        data_a = reflection_estimator.add_reflection_corrected_poa_to_df(data_a)
 
-    data_b = reflection_estimator.add_reflection_corrected_poa_to_df(data_b)
+    if "poa_ref_cor_b" in data_b.columns:
+        #print("Reflection corrected POA already in dataframe, using it.")
+        data_b["poa_ref_cor"] = data_b["poa_ref_cor_b"]
+    else:
+        data_b = reflection_estimator.add_reflection_corrected_poa_to_df(data_b)
 
-    print(data_a)
-    print(data_a.columns)
-    print(data_b)
-    print(data_b.columns)
+    #data_a = reflection_estimator.add_reflection_corrected_poa_to_df(data_a)
+    #data_b = reflection_estimator.add_reflection_corrected_poa_to_df(data_b)
 
-    data = pandas.DataFrame()
-    data["time"] = data_a["time"]
-    data["dni"] = data_a["dni"]
-    data["dhi"] = data_a["dhi"]
-    data["ghi"] = data_a["ghi"]
-    data["cloud_cover"] = data_a["cloud_cover"]
 
-    data["poa_ref_cor"] = data_a["poa_ref_cor"] + data_b["poa_ref_cor"]
+    # data_c = both sides, same as a+b when it comes to absorbed radiation
+    data_c = pandas.DataFrame()
+    data_c["time"] = data_a["time"]
+    data_c["dni"] = data_a["dni"]
+    data_c["dhi"] = data_a["dhi"]
+    data_c["ghi"] = data_a["ghi"]
+    data_c["cloud_cover"] = data_a["cloud_cover"]
+    data_c["poa_ref_cor"] = data_a["poa_ref_cor"] + data_b["poa_ref_cor"]
+
+    # adding temp to data if it exists
+    if "T" in data_a.columns:
+        data_c["T"] = data_a["T"]
+
+    if "wind" in data_a.columns:
+        data_c["wind"] = data_a["wind"]
+
+    # copying module temp from input dataframe if it exists there
+    if "module_temp" in data_a.columns:
+        data_c["module_temp"] = data_a["module_temp"]
 
     # step 5. estimate panel temperature based on wind speed, air temperature and absorbed radiation
-    data = panel_temperature_estimator.add_estimated_panel_temperature(data)
+    if "module_temp" not in data_c.columns:
+        data_c = panel_temperature_estimator.add_estimated_panel_temperature(data_c)
+    else:
+        # print("Module temp already in data, using value from \"module_temp\" -column.")
+        pass
 
     # step 6. estimate power output
-    data = output_estimator.add_output_to_df(data)
+    data_c = output_estimator.add_output_to_df(data_c)
 
     if not extended_output:
         # if extended output not in use, return only some columns
-        return data[["T", "wind", "module_temp", "output"]]
+        return data_c[["T", "wind", "module_temp", "output"]]
 
-    return data
+    return data_c
 
 def process_radiation_df(data_in):
     """
@@ -553,9 +604,9 @@ def process_radiation_df(data_in):
     data = data_in.copy()
 
     #print("bifacial check")
-    #if bifacial:
-    #    print("was bifacial, using bifacial processing instead")
-    #    return process_radiation_df_bifacial(data)
+    if bifacial:
+        print("was bifacial, using bifacial processing")
+        return process_radiation_df_bifacial(data)
 
     #print("was not bifacial, using common processing instead")
 
@@ -579,7 +630,7 @@ def process_radiation_df(data_in):
                                                              panel_azimuth)
 
     if "dni_shading" in data.columns:
-        print("dni_shading column detected in dataframe, multiplying dni_poa with (1-dni_shading)")
+        #print("dni_shading column detected in dataframe, multiplying dni_poa with (1-dni_shading)")
 
         # print("values pre change:")
         # print(data["dni_poa"])
@@ -588,7 +639,7 @@ def process_radiation_df(data_in):
         # print(data["dni_poa"])
 
     if "dhi_shading" in data.columns:
-        print("dhi_shading column detected in dataframe, multiplying dhi_poa with (1-dhi_shading)")
+        #print("dhi_shading column detected in dataframe, multiplying dhi_poa with (1-dhi_shading)")
 
         # print("values pre change:")
         # print(data["dhi_poa"])
@@ -602,10 +653,20 @@ def process_radiation_df(data_in):
                                                                               panel_tilt, panel_azimuth)
 
     # step 4. compute sum of reflection-corrected components:
-    data = reflection_estimator.add_reflection_corrected_poa_to_df(data)
+
+    if "poa_ref_cor" in data.columns:
+        print("Reflection corrected POA already in dataframe, using it.")
+    else:
+        data = reflection_estimator.add_reflection_corrected_poa_to_df(data)
 
     # step 5. estimate panel temperature based on wind speed, air temperature and absorbed radiation
-    data = panel_temperature_estimator.add_estimated_panel_temperature(data)
+    #print("Columns before module temp adding:")
+    #print(data.columns)
+    if "module_temp" not in data.columns:
+        data = panel_temperature_estimator.add_estimated_panel_temperature(data)
+    else:
+        #print("Module temp already in data, using value from \"module_temp\" -column.")
+        pass
 
     # step 6. estimate power output
     data = output_estimator.add_output_to_df(data)

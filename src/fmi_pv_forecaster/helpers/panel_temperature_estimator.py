@@ -25,11 +25,11 @@ def add_estimated_panel_temperature(df: pandas.DataFrame) -> pandas.DataFrame:
     # checking that all required variables exist in df
 
     if "T" not in df.columns:
-        # print("No air temperature in dataframe, using constant value: " + str(default_parameters.air_temperature)+"°C")
+        #print("No air temperature in dataframe, using constant value: " + str(default_parameters.air_temperature)+"°C")
         df["T"] = default_parameters.air_temperature
 
     if "wind" not in df.columns:
-        # print("No wind speed in dataframe, using constant value: " + str(default_parameters.wind_speed)+"m/s")
+        #print("No wind speed in dataframe, using constant value: " + str(default_parameters.wind_speed)+"m/s")
         df["wind"] = default_parameters.wind_speed
 
     if "poa_ref_cor" not in df.columns:

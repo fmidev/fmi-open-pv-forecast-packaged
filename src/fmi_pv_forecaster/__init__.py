@@ -9,6 +9,9 @@ from .pv_forecaster import get_fmi_forecast_at_interpolated_time
 from .pv_forecaster import get_fmi_forecast_for_interval
 from .pv_forecaster import get_default_clearsky_forecast
 from .pv_forecaster import get_fmi_radiation_forecast
+from .pv_forecaster import get_clearsky_estimate_for_times
+from .pv_forecaster import get_clearsky_radiation_for_times
+
 # external usage
 from .pv_forecaster import process_radiation_df
 from .pv_forecaster import set_angles
@@ -45,6 +48,8 @@ __all__ = [
     "get_fmi_forecast_at_interpolated_time",
     "get_default_clearsky_forecast",
     "get_fmi_radiation_forecast",
+    "get_clearsky_estimate_for_times",
+    "get_clearsky_radiation_for_times",
 
     # toggles
     "set_extended_output",

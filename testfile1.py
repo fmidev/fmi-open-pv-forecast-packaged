@@ -20,8 +20,8 @@ data4 = pvfc.get_default_clearsky_forecast(timestep=1)
 #print(data)
 #print(type(data))
 
-print(data2)
-print(type(data2))
+#print(data2)
+#print(type(data2))
 
 
 # plotting forecast
