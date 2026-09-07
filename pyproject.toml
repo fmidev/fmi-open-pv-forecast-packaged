@@ -4,19 +4,31 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fmi-pv-forecast"
-version = "0.1.0"
+version = "0.1.2"
 description = "Forecasting tools for FMI PV data"
 authors = [
-    { name = "Timo Salola", email = "you@example.com" }
+    { name = "Timo Salola", email = "timo.salola@fmi.fi" }
 ]
-readme = "README.md"
-license = { text = "MIT" }
+readme = "readme.md"
+license = "MIT"
+license-files = ["licenses/*"]
 requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Utilities",
+]
 dependencies = [
     "pandas",
     "fmiopendata",
-    "pvlib"
+    "pvlib",
+    "numpy"
 ]
+
+[project.urls]
+Homepage = "https://github.com/fmidev/fmi-open-pv-forecast-packaged"
 
 
 [tool.setuptools]

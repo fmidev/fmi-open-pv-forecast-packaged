@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: fmi-pv-forecast
+Version: 0.1.2
+Summary: Forecasting tools for FMI PV data
+Author-email: Timo Salola <timo.salola@fmi.fi>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pandas
+Requires-Dist: fmiopendata
+Requires-Dist: pvlib
+Requires-Dist: numpy

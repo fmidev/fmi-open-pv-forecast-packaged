@@ -32,10 +32,12 @@ def add_estimated_panel_temperature(df: pandas.DataFrame) -> pandas.DataFrame:
         # print("No wind speed in dataframe, using constant value: " + str(default_parameters.wind_speed)+"m/s")
         df["wind"] = default_parameters.wind_speed
 
+
+
     if "poa_ref_cor" not in df.columns:
-        print("no reflection corrected poa value in df 'poa_ref_cor'")
-        print("Aborting")
-        return df
+        raise ValueError("Error attempting to calculate panel temperature, dataframe did not contain column 'poa_ref_cor'"
+                         "This column is supposed to contain the amount of radiation per m2 that the panels are absorbing."
+                         "Panel temperature can't be calculated without it.")
 
     def helper_add_panel_temp(df):
         estimated_temp = temperature_of_module(df["poa_ref_cor"], df["wind"], default_parameters.panel_elevation,

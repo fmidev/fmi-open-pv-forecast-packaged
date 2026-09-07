@@ -1,4 +1,6 @@
-# Package documentation
+# Package documentation 
+
+Version 0.1.2
 
 This file contains a rather verbose explanation of the functions available via this package.
 
@@ -62,7 +64,7 @@ noticeable modeling errors. If you have a method for plotting both forecasts and
 and should use the actual PV output for tuning the input parameters.
 
 Geolocation does not have to be exact and 1km from actual location is good enough. Even offsets of 5 kilometers
-should not make a big difference due to uncertainties in weather forecasts.
+should not make a big difference due to uncertainties in weather forecasts. 
 
 ## 1.2. Optional input functions
 
@@ -85,15 +87,38 @@ pvfc.set_default_wind_speed(wind_ms)
 
 * degrees_C: Air temperature in Celsius. Overridden by "T" column in dataframe if column exists. Default is 20 degrees.
 * albedo: Ground reflectivity in range [0,1]. Use 0.15 for dark ground, 0.6 for snow. Overridden by "albedo"
-  column in dataframe if column exists. Default is 0.25.
+  column in dataframe if column exists. Default is 0.15.
 * wind_ms: Wind speed in meters per second. Overridden by "wind" column in dataframe if column exists.
   Default value is 2.
 
 ---
 
+## 1.4. Toggles
+
+```python
+pvfc.set_extended_output(True)
+pvfc.set_snow_sliding(True)
+pvfc.set_bifacial(True)
+```
+Extended output will not remove extra columns generated during processing of the input dataframe. This may have
+uses for debugging or other purposes.
+
+Set snow sliding will add a new column "degrees above snowsliding" into the output dataframe. Positive values mean
+that snow on panels would either melt or slide off and negative values mean this is unlikely to happen. Modeling is 
+based on Marion 2013 model. The value in this column is essentially the same as how many degrees air temperature could
+drop before snow sliding would not happen. 
+
+Setting bifaciality on will simulate radiation on both sides of the PV panel, with the backside having efficiency
+of 1.0 or whatever the user has given with: `pvfc.set_relative_bifacial_backside_efficiency(value)`
+
+Once radiation absorbed by the panel from the both sides is calculated, the two dataframes are merged so that the
+same monofacial temperature and power output estimation models can be used. See [bifacial modeling](bifacial_modeling.md)
+for additional information.
+
+
 # 2. Forecasting functions
 
-The forecasting functions can be split into 3 groups, FMI forecasts, clear sky forecasts and external data processing.
+The forecasting functions can be split into 3 groups, FMI forecasts, clear sky forecasts and external data processing. 
 The PV modeling pipeline(and model functions) are the same with all three,
 but the source of the radiation data and the output returned to the user varies.
 
@@ -101,6 +126,7 @@ but the source of the radiation data and the output returned to the user varies.
 
 These are the FMI open data based forecasting functions. They utilize weather and radiation forecasts retrieved
 from FMI open data service.
+
 
 By default, they are cached. This means that unless user
 changes the geolocation, or unless 60 seconds pass, the system will not make another API call. This is possible because
@@ -111,11 +137,13 @@ Users can for example, call the FMI forecast for one set of panels, adjust panel
 without new API calls being made. The API will stop responding to calls if user attempts to make thousands of calls
 per day, which is unlikely in any situation, but this caching should make it even less likely.
 
+
+
 ```python
 # Forecasting functions:
-pvfc.get_default_fmi_forecast()  # <- main, calls helper
-pvfc.get_fmi_forecast_for_interval(interval_start, interval_end)  # <- wrapper, calls main
-pvfc.get_fmi_forecast_at_interpolated_time(time)  # <- wrapper, calls main
+pvfc.get_default_fmi_forecast() # <- main, calls helper
+pvfc.get_fmi_forecast_for_interval(interval_start, interval_end) # <- wrapper, calls main
+pvfc.get_fmi_forecast_at_interpolated_time(time) # <- wrapper, calls main
 
 # Helper:
 pvfc.get_fmi_radiation_forecast()
@@ -123,35 +151,32 @@ pvfc.get_fmi_radiation_forecast()
 
 ### 2.1.1. Radiation forecasting function
 
-This is the helper function. It calls the FMI open data API and requests the available 66-ish hour
+This is the helper function. It calls the FMI open data API and requests the available 66-ish hour 
 radiation and weather forecast. This function exists so that users can make their own modifications to the forecasts
-if needed or use them for purposes other than PV forecasting.
+if needed or use them for purposes other than PV forecasting. 
 
 **Calling the function:**
-
 ```python
 # Calling the function:
 radiation_forecast = pvfc.get_fmi_radiation_forecast()
 ```
 
 **Usage example:**
-
 ```python
 # sample usage:
 radiation_forecast = pvfc.get_fmi_radiation_forecast()
 
 # modifications to radiation_forecast happen here
-radiation_forecast["dni"] = radiation_forecast["dni"] * 0.90
+radiation_forecast["dni"] = radiation_forecast["dni"]*0.90
 
 # using radiation/weather forecast to generate PV output forecast:
 pv_forecast = process_radiation_df(radiation_forecast)
 ```
 
-More info on the weather forecast
-API: [https://en.ilmatieteenlaitos.fi/open-data-manual-wfs-examples-and-guidelines](https://en.ilmatieteenlaitos.fi/open-data-manual-wfs-examples-and-guidelines)
+More info on the weather forecast API: [https://en.ilmatieteenlaitos.fi/open-data-manual-wfs-examples-and-guidelines](https://en.ilmatieteenlaitos.fi/open-data-manual-wfs-examples-and-guidelines) 
 
 And the python package used for accessing the API:
-[https://github.com/pnuu/fmiopendata](https://github.com/pnuu/fmiopendata)
+ [https://github.com/pnuu/fmiopendata](https://github.com/pnuu/fmiopendata)
 
 ### 2.1.2. Default FMI forecast
 
@@ -160,28 +185,28 @@ radiation forecasts can be used together with the PV model.
 
 This function takes one optional parameter `interpolate`. By default, it is set to `False`. If set to `"15min"` or
 `"1min"`, the radiation forecast will be linearly interpolated to a new time resolution before being passed onto the PV
-model.
+model. 
 
 **Default FMI forecast function code:**
 ```python
 def get_default_fmi_forecast(interpolate=False) -> pd.DataFrame:
-  # getting the hourly 66 hour forecast
-  data = get_fmi_radiation_forecast()
+    # getting the hourly 66 hour forecast
+    data = get_fmi_radiation_forecast()
 
-  # if interpolation is left False, interpolation will not be done
-  if interpolate is not False:
-    # resampling to given time resolution, "15min" perhaps?
-    data = data.resample(interpolate).asfreq()
+    # if interpolation is left False, interpolation will not be done
+    if interpolate is not False:
+        # resampling to given time resolution, "15min" perhaps?
+        data = data.resample(interpolate).asfreq()
 
-    # interpolating nans from resampling
-    data = data.interpolate(method="linear")
-    # Note, this function supports other interpolation methods. Got a bunch of errors with them, but in theory
-    # some interpolation functions could result in nicer output.
+        # interpolating nans from resampling
+        data = data.interpolate(method="linear")
+        # Note, this function supports other interpolation methods. Got a bunch of errors with them, but in theory
+        # some interpolation functions could result in nicer output.
 
-  # processing data with our pv model
-  data = process_radiation_df(data)
+    # processing data with our pv model
+    data = process_radiation_df(data)
 
-  return data
+    return data
 ```
 
 **Usage example:**
@@ -195,7 +220,6 @@ interpolated_forecast = pvfc.get_default_fmi_forecast(interpolate="15min")
 ```
 
 ### 2.1.3. Interval from FMI forecast
-
 This function returns the output of the default fmi forecast function with interpolate set to `False` where timestamps
 are between the two datetime inputs. Can be useful for retrieving daily power for tomorrow and calculating KWh values.
 
@@ -203,16 +227,22 @@ are between the two datetime inputs. Can be useful for retrieving daily power fo
 pvfc.get_fmi_forecast_for_interval(interval_start, interval_end)
 ```
 
-### 2.1.4. FMI forecast at interpolated time
 
+### 2.1.4. FMI forecast at interpolated time
 This function can be used to retrieve a single interpolated dataframe row for any given time within the forecast window.
-May be useful for requesting power right now or at tomorrow at 19:55:04 if needed.
+May be useful for requesting power right now or at tomorrow at 19:55:04 if needed. 
 As the FMI radiation forecasts have a time resolution of 60 minutes, these arbitrary time forecasts are more of a
 tool for convenience rather than something that could be considered accurate.
+
 
 ```python
 pvfc.get_fmi_forecast_at_interpolated_time(time) 
 ```
+
+
+
+
+
 
 ## 2.2. Clear sky forecasting functions
 
@@ -231,7 +261,6 @@ time interval or geographic location, this can be used for calculating power out
 over a whole year. See [example 5](examples.md#example-5-estimating-clearsky-power-for-custom-time-interval) for usage.
 
 **Usage example:**
-
 ```python
 # 60 min default forecast:
 default_clearsky_forecast = pvfc.get_default_clearsky_forecast()
@@ -248,11 +277,9 @@ pvfc.process_radiation_df(radiation_df)
 ```
 
 This function is actually the only PV model function in the program. When FMI or PVlib based forecasts are requested,
-they generate radiation tables and then call this function with their radiation tables. See
-also [example 3](examples.md#example-3-processing-external-data-with-the-pv-model) for additional info.
+they generate radiation tables and then call this function with their radiation tables. See also [example 3](examples.md#example-3-processing-external-data-with-the-pv-model) for additional info.
 
 **Expected input df structure:**
-
 ```commandline
                                  dni        dhi        ghi          T       wind     albedo
 time                                                                                       
@@ -262,9 +289,7 @@ time
 2024-06-01 02:30:00+00:00      95.50      54.20      65.64      21.22       3.24       0.10
 2024-06-01 03:30:00+00:00     458.27      66.92     173.24      21.47       3.64       0.10
 ```
-
 **Generated output:**
-
 ```commandline
                                    T       wind  module_temp     output
 time                                                                   
@@ -280,8 +305,7 @@ time
 **Warning: Model errors caused by misunderstandings on timestamps are extremely common.**
 
 **Meteorological time:**
-For meteorologists, 12:00 often means average of the time interval [11:00, 12:00] even when the better average time for
-this
+For meteorologists, 12:00 often means average of the time interval [11:00, 12:00] even when the better average time for this
 interval would be 11:30. If not corrected, this can easily result in 30 minute errors in sun positions, causing
 significant modeling errors. The FMI radiation retrieval function handles this for the user(which explains the xx:30:00
 -times in timestamps), but when working with your own data, verify what the timestamps actually mean.

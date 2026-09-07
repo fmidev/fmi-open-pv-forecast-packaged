@@ -102,7 +102,7 @@ def collect_fmi_opendata(latitude: float, longitude: float,
                 # print("Cache is new at " + str(seconds_since_cache_update) + " seconds. Reading data from cache.
                 # This line should not print")
                 pass
-            print("Cached server call done.")
+            #print("Cached server call done.")
             return cached_data
         else:
             raise Exception(
@@ -130,7 +130,7 @@ def collect_fmi_opendata(latitude: float, longitude: float,
                                       'parameters=' + parameters_str])
     data = snd.data
 
-    print("Server call done.")
+    #print("Server call done.")
 
     # checking if we got any data
     if len(data) == 0:
@@ -139,9 +139,16 @@ def collect_fmi_opendata(latitude: float, longitude: float,
                         "and that requested time interval contains hours between now("
                         + str(datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")) + ") and "
                         "forecast interval end "
-                        + str((datetime.now(timezone.utc) + timedelta(hours=66)).strftime("%Y-%m-%d %H:%M")))
+                        + str((datetime.now(timezone.utc) + timedelta(hours=66)).strftime("%Y-%m-%d %H:%M"))
+                        + "Collection string:"
+                        + collection_string + " Other errors are also possible."
+                        )
 
-    # print("Got " + str(len(data))+ " values as forecast.")
+    #print("Got " + str(len(data))+ " values as forecast.")
+
+    #print("data type:")
+    # print(type(data)) # should be dict
+    #print(data.keys()) # these are datetimes, datetime.datetime(2026, 6, 8, 9, 0) etc
 
     # Times to use in forming dataframe
     data_list = []
@@ -149,6 +156,37 @@ def collect_fmi_opendata(latitude: float, longitude: float,
     for time_a, location_data in data.items():
         location = list(location_data.keys())[0]  # Get the location dynamically
         values = location_data[location]
+
+        #print(type(values)) # another dict
+        #print(values.keys()) # getting dict_keys([None, 'Global radiation accumulation', 'Short wave radiation accumulation'])
+
+        # throwing an error if server is not returning all expected values. This can happen during high server load times
+        # Also should warn if API has changed and we aren't getting the required parameters anymore.
+        if len(values.keys()) < 6:
+            missing_values = []
+            received_values = values.keys()
+
+
+            expected_values = ["Air temperature",
+                               "Global radiation accumulation",
+                               "Net short wave radiation accumulation at the surface",
+                               "Short wave radiation accumulation",
+                               "Wind speed",
+                               "Total cloud cover"]
+
+            for e_val in expected_values:
+                if e_val not in values.keys():
+                    missing_values.append(e_val)
+
+            raise ValueError("FMI open data server did not return all of the expected values, missing values were:"
+                             + str(missing_values) + " got the following values: " + str(received_values) + "."
+                             " If https://opendata.fmi.fi/ returns a high-load page, the issue could be server load"
+                            "related. If not and the issue persists, API might have changed. This would require"
+                            " fixes to the forecasting package.")
+
+
+        # dict_keys([None, 'Global radiation accumulation', 'Short wave radiation accumulation'])
+
 
         data_list.append({'Time': time_a,
                           'T': values['Air temperature']['value'],
@@ -195,7 +233,7 @@ def collect_fmi_opendata(latitude: float, longitude: float,
     df["sza"] = get_solar_azimuth_zenit_fast(df.index, latitude, longitude)[1]
     # solar zenit angle added
 
-    # Calculate dni from dhi
+    # Calculate dni from direct irradiance and sun angle
     df['DNI'] = df['DirHI'] / np.cos(df['sza'] * (np.pi / 180))
 
     # Keep the necessary parameters

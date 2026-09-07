@@ -1,8 +1,7 @@
-This repository contains a more up to date and packaged version of the FMI PV forecasting code available at: https://github.com/fmidev/fmi-open-pv-forecast
-
-This packaged version should be used in new projects instead of the older forecasting code.
 
 # FMI open pv forecast package
+
+Version: 0.1.2 - Licence: MIT
 
 The main functionality of this package is the PV forecasting tool which is a combination of the FMI PV model and
 weather forecasts from FMI open data. The resulting PV forecasting tool generates hourly weather-aware PV forecasts for
@@ -25,52 +24,35 @@ into the package.
 ## **Table of contents:**
 
 <!-- TOC -->
-
-* [Installing the package](#installing-the-package)
-* [FMI PV forecasts](#fmi-pv-forecasts)
+* [FMI open pv forecast package](#fmi-open-pv-forecast-package)
+  * [**Table of contents:**](#table-of-contents)
+  * [Installing the package](#installing-the-package)
+  * [FMI PV forecasts](#fmi-pv-forecasts)
     * [Forecast length and updating frequency](#forecast-length-and-updating-frequency)
     * [Geographic boundaries](#geographic-boundaries)
-* [Clear sky forecasts](#clear-sky-forecasts)
-* [Forecast accuracy](#forecast-accuracy)
+  * [Clear sky forecasts](#clear-sky-forecasts)
+  * [Forecast accuracy](#forecast-accuracy)
 * [Usage of external data instead of FMI open data](#usage-of-external-data-instead-of-fmi-open-data)
 * [Usage example](#usage-example)
-* [Authors and acknowledgements](#authors-and-acknowledgements)
-
+ * [Authors and acknowledgements](#authors-and-acknowledgements)
 <!-- TOC -->
 
 ## Installing the package
 
-As of early 2026, the package is still in development phase. If you would like to try it out, download
-`fmi_pv_forecast-0.1.0-py3-none-any.whl` from the dist/ folder and install it into your
+As of September 2026, this package is still in development phase. Package may already be available on Pypi. If not
+you can, download
+`fmi_pv_forecast-0.1.2-py3-none-any.whl` from the dist/ folder and install it into your
 python environment. This can be done with the command
-`pip install --force-reinstall wheel fmi_pv_forecast-0.1.0-py3-none-any.whl`
-After package is installed, it can be imported as shown in the examples. Running the install command also installs the 
-following dependencies:
-
-```commandline
-Package            Version
------------------- ------------
-certifi            2026.2.25
-charset-normalizer 3.4.6
-defusedxml         0.7.1
-fmiopendata        0.5.0
-h5py               3.16.0
-idna               3.11
-numpy              2.4.3
-packaging          26.0
-pandas             3.0.1
-pip                25.1.1
-pvlib              0.15.0
-python-dateutil    2.9.0.post0
-pytz               2026.1.post1
-requests           2.32.5
-scipy              1.17.1
-six                1.17.0
-urllib3            2.6.3
-wheel              0.46.3
-```
-
+`pip install --force-reinstall wheel fmi_pv_forecast-0.1.2-py3-none-any.whl`
+After package is installed, it can be imported as shown in the examples.
 ---
+
+## Version history:
+
+- 0.1.2 (2026-08-18) License switched from GPL 3.0 to MIT. 
+- 0.1.1 (2026-06-02) Added bifaciality and Marion -based snow sliding.
+- 0.1.0 Initial PV Model with monofacial modeling features.
+
 
 ## FMI PV forecasts
 
@@ -210,6 +192,6 @@ Timo Salola.
 
 Additional help from: Viivi Kallio, William Wandji, Anders Lindfors, Juha Karhu.
 
-This project uses PVlib.
+This package relies on Pandas, Numpy, PVlib and FMI open data API.
 
 <img src="readme_images/pvlib_logo.webp" height="100"/>

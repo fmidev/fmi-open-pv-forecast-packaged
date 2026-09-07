@@ -1,15 +1,13 @@
-This document has examples on how to use the python package.
+This document has examples on how to use the python package version 0.1.2.
 
 **Table of contents**
 <!-- TOC -->
-
-* [Example 1: FMI weather forecast based PV system output](#example-1-fmi-weather-forecast-based-pv-system-output)
-* [Example 2: Plotting clearsky and FMI weather based forecasts into the same plot](#example-2-plotting-clearsky-and-fmi-weather-based-forecasts-into-the-same-plot)
-* [Example 3. Processing external data with the PV model](#example-3-processing-external-data-with-the-pv-model)
-* [Example 4. Forecast interpolation](#example-4-forecast-interpolation)
-* [Example 5. Estimating clearsky power for custom time interval](#example-5-estimating-clearsky-power-for-custom-time-interval)
-* [Example 6. Multiple panel angles](#example-6-multiple-panel-angles)
-
+  * [Example 1: FMI weather forecast based PV system output](#example-1-fmi-weather-forecast-based-pv-system-output)
+  * [Example 2: Plotting clearsky and FMI weather based forecasts into the same plot](#example-2-plotting-clearsky-and-fmi-weather-based-forecasts-into-the-same-plot)
+  * [Example 3. Processing external data with the PV model](#example-3-processing-external-data-with-the-pv-model)
+  * [Example 4. Forecast interpolation](#example-4-forecast-interpolation)
+  * [Example 5. Estimating clearsky power for custom time interval](#example-5-estimating-clearsky-power-for-custom-time-interval)
+  * [Example 6. Multiple panel angles](#example-6-multiple-panel-angles)
 <!-- TOC -->
 
 ## Example 1: FMI weather forecast based PV system output

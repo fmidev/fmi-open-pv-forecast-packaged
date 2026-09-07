@@ -1,6 +1,7 @@
 import fmi_pv_forecaster as pvfc
 import pandas as pd
 
+
 def print_full(x: pd.DataFrame):
     """
     Prints a dataframe without leaving any columns or rows out. Useful for debugging.
@@ -21,7 +22,7 @@ def print_full(x: pd.DataFrame):
 
 
 pvfc.set_location(65, 25)
-data  = pvfc.get_fmi_radiation_forecast()
+data = pvfc.get_fmi_radiation_forecast()
 
 
 print_full(data)

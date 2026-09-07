@@ -1,4 +1,5 @@
-# PV model explained
+# PV model explained 
+Version 0.1.2
 
 This document explains the steps of the PV model. The document is split into two sections, model overview for those who
 would like to understand the basics and a more detailed description for those who want to use the model in research
@@ -608,6 +609,50 @@ PhD thesis (Sandia Naitional Laboratories, 2004).
 
 ---
 
+
+### 5.1. Snow sliding modeling
+
+Snow sliding is the phenomena where snow on the panels is heated to a temperature at which small layer of water can 
+form between the panel surface and the snow on top of it. When this occurs, gravity can slide some or all the snow from the
+panel surface. The model used by this package is the based on the Marion model. _"Measured and modeled photovoltaic 
+system energy losses from snow for Colorado and Wisconsin locations"_ Marion et al. 2013. The original Marion model 
+returns a boolean value which describes if snow sliding conditions are possible.
+
+---
+**Our model:**
+
+```
+"degrees above snowsliding" = T_air + POA/80
+```
+Where:
+
+* T_air is air temperature in Celsius.
+* POA is radiation on solar panel surface in W/m².
+* "degrees above snowsliding is how many degrees above "snow would slide" our panels are at. 
+
+Example:
+
+T_air = -1C, POA = 160W/m²
+```
+"degrees above snowsliding" = T_air + POA/80
+"degrees above snowsliding" = -1 + 160/80
+"degrees above snowsliding" = -1 + 2
+"degrees above snowsliding" = 1
+```
+In this case, air temperature is -1C and snow should not melt or slide. But due to solar radiation, snow on the panel
+surface is actively melting. Snow will continue melting unless air temperature drops by 1 degree or radiation decreases
+by 80W/m².
+
+Knowing how far we are from snow melting point can be useful if the there's some bias present in local temperatures.
+Or if users want to if there's even a slim chance that snow could melt, or be very sure that snow will melt when the 
+model suggests so.
+
+
+
+
+
+
+
 ## Step 6. Output estimation
 
 Final output of the PV model is estimated by using Huld 2010 model. This same model is sometimes referred
@@ -658,7 +703,6 @@ stateDiagram-v2
     rated_power --> output_model
     
     output_model --> output_power
-
 ```
 
 The way the Huld model works is that it computes `efficiency` based on panel temperature and absorbed radiation
@@ -700,26 +744,26 @@ data averaging, Solar Energy, 84 324--338 (2010).
 
 This section contain tips and things we have noticed while using the PV model.
 
+
 ## 2.1. Adding shadow modeling to the PV model
 
-If you want to model shading from trees or buildings with the PV model, the results should be
-accurate enough if you just
-multiply the `dni` values in the input dataframe by a shading coefficient.
-To do this, you need to figure out how strong the shading is at each moment in time. The hardest bit here is figuring
-out how to generate a shadow map of the PV site. This is challenging and we do not currently have any easy methods
-for shadow map generation that we could recommend.
+If you'd like to add shading modeling to the system (shading = direct radiation is decreased by an obstacle), 
+fairly accurate results can be achieved by multiplying DNI radiation component by a shading coefficient. This
+coefficient should be Sun angle dependent, and figuring out how to generate a shading map will be left to the user.
+
+This method is not physically 100% accurate due to how DNI values are required by Perez DHI transpositions. The results
+will be good, but if you need the best possible results, DNI shading should be applied after panel transpositions.
+You can do this either by building a custom version of the package, or asking us for a custom build of the model.
 
 ## 2.2. Snow related issues
 
 ### 2.2.1. Snow sliding
 
-In Finland and other northern countries, having snow on the panels decreases panel output significantly. The model
-does not take this into account as snow is a complex matter. However, snow has a habit of sliding off the panels when
-panel surface temperature reaches 0 degrees. The moment when this occurs can be modeled with the PV model.
-Snow reflects approximately 60% of incoming light away and so if you create a custom forecasting function which
-multiplies
-`[dni, dhi, ghi]` by 0.6, the panel temperatures contained in the output should be close to actual experienced panel
-temperatures.
+Snow sliding modeling is new in 0.1.1. This is based on the Marion snow sliding model, improvements and a more
+complete snow sliding model implementation is among the next goals for this PV package.
+
+As of now, the model calculates the temperature of the snow on the panels and if this temperature is positive,
+snow sliding should occur. 
 
 ### 2.2.2. Snow reflections
 
