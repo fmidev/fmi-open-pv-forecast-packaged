@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fmi-pv-forecast"
-version = "0.1.2"
+version = "0.1.3"
 description = "Forecasting tools for FMI PV data"
 authors = [
     { name = "Timo Salola", email = "timo.salola@fmi.fi" }

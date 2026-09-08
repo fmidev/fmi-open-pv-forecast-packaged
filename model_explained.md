@@ -1,5 +1,5 @@
 # PV model explained 
-Version 0.1.2
+Version 0.1.3
 
 This document explains the steps of the PV model. The document is split into two sections, model overview for those who
 would like to understand the basics and a more detailed description for those who want to use the model in research
@@ -422,7 +422,7 @@ radiation on panel surface, reflective losses are still not accounted for and di
 equations are required for each _plane of array_ transposed radiation value.
 
 The transposition models used here are described by Sandia on their page. The DHI model is the most complex and the
-DHI Perez model built into PVlib itself is used. DNI and GHI transposition models are implemented in python.
+DHI Perez-Driesse model built into PVlib itself is used. DNI and GHI transposition models are implemented in python.
 
 [GHI model](https://pvpmc.sandia.gov/modeling-guide/1-weather-design-inputs/plane-of-array-poa-irradiance/calculating-poa-irradiance/poa-ground-reflected/),
 [DNI model](https://pvpmc.sandia.gov/modeling-guide/1-weather-design-inputs/plane-of-array-poa-irradiance/calculating-poa-irradiance/poa-beam/),
@@ -433,7 +433,7 @@ descriptions on Sandia's web page.
 
 ## Step 3. Reflection estimation
 
-The direction of radiation is different for the 3 radiation components and thus we need 3 relfection estimation
+The direction of radiation is different for the 3 radiation components and thus we need 3 reflection estimation
 functions. The functions used here are from Martin & Ruiz 2001 paper which is an excellent example of how to write
 a test-based research paper.
 
@@ -751,9 +751,26 @@ If you'd like to add shading modeling to the system (shading = direct radiation 
 fairly accurate results can be achieved by multiplying DNI radiation component by a shading coefficient. This
 coefficient should be Sun angle dependent, and figuring out how to generate a shading map will be left to the user.
 
-This method is not physically 100% accurate due to how DNI values are required by Perez DHI transpositions. The results
-will be good, but if you need the best possible results, DNI shading should be applied after panel transpositions.
-You can do this either by building a custom version of the package, or asking us for a custom build of the model.
+IMPORTANT: If you do this, you will run into some odd issues with DHI transpositions, even if transposed DNI would
+work perfectly. This happens since the Perez-Driesse DHI transposition uses DHI and DNI as inputs. Internally the 
+DHI Perez-Driesse does something like this:
+
+Low DNI, High DHI -> Assume cloudy sky and thus DHI radiation is uniform.
+
+High DNI, High DHI -> Assume clear sky and thus DHI radiation is higher from the direction of the Sun.
+
+In actuality the model is a bit more complex, and it consists of a large-ish number table which is used to estimate 
+uniformity, but the point here remains the same. Adjusting DNI too early will change the geometry of the DHI 
+transpositions.
+
+We figured this out by accident while using the older Perez(not Perez-Driesse) model. Any abnormal combinations of 
+DNI and DHI given to the Perez can result in rather amusing sawtooth patterns due to how the model changes the
+multipliers it uses. Perez-Driesse makes the sawtooth pattern disappear, but the sky geometry issue will still exist.
+
+If you are doing shading modeling, reach out to us, and we will deliver you a modified model with physically accurate
+DNI shading functionality. Or you can create your own version of the package.
+
+
 
 ## 2.2. Snow related issues
 

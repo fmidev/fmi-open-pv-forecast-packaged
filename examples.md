@@ -1,4 +1,4 @@
-This document has examples on how to use the python package version 0.1.2.
+This document has examples on how to use the python package version 0.1.3.
 
 **Table of contents**
 <!-- TOC -->
@@ -369,8 +369,8 @@ change the coordinates(which you should not do unless the two panel groups are m
 the code will only ask the server for weather and radiation data once. This saves
 bandwidth and API calls.
 
-The same code could be used for forecasting the output of bifacial systems with some tuning. Our understanding
-suggests that bifacial panels could be modeled as 2 panels with opposing directions with fairly good accuracy.
+Our bifacial model is almost identical to what's being done in this example. The backside angles are just calculated
+automatically and panel temperature estimation is done with a single panel receiving the radiation from both sides.
 
 ````python
 import datetime

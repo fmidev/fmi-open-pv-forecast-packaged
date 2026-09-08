@@ -1,4 +1,7 @@
 pyproject.toml
+readme.md
+licenses/mit-license.txt
+licenses/pvlib-license.md
 src/fmi_pv_forecast.egg-info/PKG-INFO
 src/fmi_pv_forecast.egg-info/SOURCES.txt
 src/fmi_pv_forecast.egg-info/dependency_links.txt

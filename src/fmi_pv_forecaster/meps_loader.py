@@ -1,26 +1,10 @@
-"""
-This file retrieves irradiance values from FMI open API
-Information on the service can be found here:
-https://en.ilmatieteenlaitos.fi/open-data-manual-forecast-models
-
-Data is available for a 66-hour period
-Data updates every 3 hours starting from 00 UTC, slight variation in timing can occur
-Data usually contains a couple of hours of historical data due to delays in running and transferring weather model data
-between services before the fmi_pv_forecast becomes available.
-
-Author: kalliov (Viivi Kallio).
-Modifications by: TimoSalola (Timo Salola).
-"""
-import datetime as dt
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
-
+from datetime import datetime, UTC, timedelta
 import numpy as np
-import pandas
 import pandas as pd
-from fmiopendata.wfs import download_stored_query
+import requests
+import xml.etree.ElementTree as ET
 from pvlib import location
+
 
 cache_enabled = True
 last_load_time = None
@@ -28,6 +12,30 @@ cached_data = None
 
 min_seconds_between_fmi_calls = 60
 
+
+"""
+This file contains a new version of fmi open data forecast retrieval. Old version is meps_loader_old.py and it's not
+being called anymore.
+
+"""
+
+
+def print_full(x: pd.DataFrame):
+    """
+    Prints a dataframe without leaving any columns or rows out. Useful for debugging.
+    """
+
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', 1400)
+    pd.set_option('display.float_format', '{:10,.2f}'.format)
+    pd.set_option('display.max_colwidth', None)
+    print(x)
+    pd.reset_option('display.max_rows')
+    pd.reset_option('display.max_columns')
+    pd.reset_option('display.width')
+    pd.reset_option('display.float_format')
+    pd.reset_option('display.max_colwidth')
 
 def clear_cache():
     """
@@ -39,52 +47,23 @@ def clear_cache():
     last_load_time = None
     cached_data = None
 
-
-def get_solar_azimuth_zenit_fast(sim_dt: datetime, latitude, longitude):
+def collect_fmi_opendata(latitude: float, longitude: float) -> pd.DataFrame:
     """
-    Returns apparent solar zenith and solar azimuth angles in degrees.
-    :param sim_dt: time to compute the solar position for.
-    :param latitude: WGS84 latitude of pv system
-    :param longitude: WGS84 longitude of pv system
-    :return: azimuth, zenith
+    This is the new version of FMI open data forecast retrieval. Old relied on GPL licensed library.
+
+
+    :param latitude: WGS84 latitude
+    :param longitude: WGS84 longitude
+    :return: time, dni, dhi, ghi, wind, T, cloud_cover, albedo - dataframe, time in utc
     """
 
-    # panel location and installation parameters from config file
-    panel_latitude = latitude
-    panel_longitude = longitude
-
-    # panel location object, required by pvlib
-    panel_location = location.Location(panel_latitude, panel_longitude)
-
-    # solar position object
-    solar_position = panel_location.get_solarposition(sim_dt)
-
-    # apparent zenith and azimuth, Using apparent for zenith as the atmosphere affects sun elevation.
-    # apparent_zenith = Sun zenith as seen and observed from earth surface
-    # zenith = True Sun zenith, would be observed if Earth had no atmosphere
-    solar_apparent_zenith = solar_position["apparent_zenith"]
-    solar_azimuth = solar_position["azimuth"]
-
-    return solar_azimuth, solar_apparent_zenith
-
-
-def collect_fmi_opendata(latitude: float, longitude: float,
-                         start_time: datetime, end_time: datetime) -> pandas.DataFrame:
-    """
-    :param latitude:  wgs84 latitude of the pv system
-    :param longitude: wgs84 longitude of the pv system
-    :param start_time:  2013-03-05T12:00:00Z ISO TIME
-    :param end_time:    2013-03-05T12:00:00Z ISO TIME
-    :return: Pandas dataframe with columns ["time", "dni", "dhi", "ghi", "dir_hi", "albedo", "T", "wind", "cloud_cover"]
-    """
+    ### Cache bit begins
 
     global cached_data
     global cache_enabled
     global last_load_time
 
     time_now = datetime.now()
-
-    # print("checking caching")
 
     if cache_enabled:
         if last_load_time is None and cached_data is None:
@@ -108,160 +87,179 @@ def collect_fmi_opendata(latitude: float, longitude: float,
             raise Exception(
                 "Something wrong with caching. Last load time " + str(last_load_time))
 
-    collection_string = "fmi::forecast::harmonie::surface::point::multipointcoverage"
+    ### Cache bit ends
 
-    # List the wanted MEPS parameters
-    parameters = ["Temperature",
-                  "RadiationGlobalAccumulation",
+
+    # this is what the url used to look like in our previous retrieval functions
+    # url = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage&latlon=60,25&starttime=2026-09-07 07:49:28.070700&endtime=2026-09-10 05:49:28.070700&parameters=Temperature,RadiationGlobalAccumulation,RadiationNetSurfaceSWAccumulation,RadiationSWAccumulation,WindSpeedMS,TotalCloudCover"
+
+    # creating url in parts
+    # base stuff in part 1
+    url_part1 = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::harmonie::surface::point::multipointcoverage"
+
+    # geolocation in part 2
+    url_part2 = "&latlon="+str(latitude)+","+str(longitude)
+
+    # part 3 contains time interval, going with a minimal date since this seems to work
+    url_part3 = "&starttime=" + "-6h" + "&endtime=" + str(datetime.now() + timedelta(hours=63))
+
+    # url part 4 consists of parameters
+    parameters = ["Temperature", "WindSpeedMS", "TotalCloudCover", "RadiationGlobalAccumulation",
                   "RadiationNetSurfaceSWAccumulation",
-                  "RadiationSWAccumulation",
-                  "WindSpeedMS",
-                  "TotalCloudCover"
-                  ]
-    parameters_str = ','.join(parameters)
+                  "RadiationSWAccumulation"]
 
-    # Collect data
+    url_part4 = "&parameters=" +','.join(parameters)
 
-    latlon = str(latitude) + "," + str(longitude)
-    snd = download_stored_query(collection_string,
-                                args=["latlon=" + latlon,
-                                      "starttime=" + str(start_time),
-                                      "endtime=" + str(end_time),
-                                      'parameters=' + parameters_str])
-    data = snd.data
+    # complete url
+    url = url_part1 + url_part2 + url_part3 + url_part4
 
-    #print("Server call done.")
+    # requesting data from FMI servers
+    response = requests.get(url)  # http return code and site response is stored here
 
-    # checking if we got any data
-    if len(data) == 0:
-        raise Exception("FMI open data did not return a forecast with valid values. Check that geolocation is within "
-                        "harmonie-arome model area shown in https://en.ilmatieteenlaitos.fi/weather-forecast-models "
-                        "and that requested time interval contains hours between now("
-                        + str(datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")) + ") and "
-                        "forecast interval end "
-                        + str((datetime.now(timezone.utc) + timedelta(hours=66)).strftime("%Y-%m-%d %H:%M"))
-                        + "Collection string:"
-                        + collection_string + " Other errors are also possible."
-                        )
+    # extracting returned data
+    response_xml = response.text
 
-    #print("Got " + str(len(data))+ " values as forecast.")
-
-    #print("data type:")
-    # print(type(data)) # should be dict
-    #print(data.keys()) # these are datetimes, datetime.datetime(2026, 6, 8, 9, 0) etc
-
-    # Times to use in forming dataframe
-    data_list = []
-    # Make the dict of dict of dict of.. into pandas dataframe
-    for time_a, location_data in data.items():
-        location = list(location_data.keys())[0]  # Get the location dynamically
-        values = location_data[location]
-
-        #print(type(values)) # another dict
-        #print(values.keys()) # getting dict_keys([None, 'Global radiation accumulation', 'Short wave radiation accumulation'])
-
-        # throwing an error if server is not returning all expected values. This can happen during high server load times
-        # Also should warn if API has changed and we aren't getting the required parameters anymore.
-        if len(values.keys()) < 6:
-            missing_values = []
-            received_values = values.keys()
-
-
-            expected_values = ["Air temperature",
-                               "Global radiation accumulation",
-                               "Net short wave radiation accumulation at the surface",
-                               "Short wave radiation accumulation",
-                               "Wind speed",
-                               "Total cloud cover"]
-
-            for e_val in expected_values:
-                if e_val not in values.keys():
-                    missing_values.append(e_val)
-
-            raise ValueError("FMI open data server did not return all of the expected values, missing values were:"
-                             + str(missing_values) + " got the following values: " + str(received_values) + "."
-                             " If https://opendata.fmi.fi/ returns a high-load page, the issue could be server load"
-                            "related. If not and the issue persists, API might have changed. This would require"
-                            " fixes to the forecasting package.")
-
-
-        # dict_keys([None, 'Global radiation accumulation', 'Short wave radiation accumulation'])
-
-
-        data_list.append({'Time': time_a,
-                          'T': values['Air temperature']['value'],
-                          'GHI_accum': values['Global radiation accumulation']['value'],
-                          'NetSW_accum': values['Net short wave radiation accumulation at the surface']['value'],
-                          'DirHI_accum': values['Short wave radiation accumulation']['value'],
-                          'Wind speed': values['Wind speed']['value'],
-                          'Total cloud cover': values['Total cloud cover']['value']})
-
-    # Create a DataFrame and set time as index
-    df = pd.DataFrame(data_list)
-
-    df.set_index('Time', inplace=True)
-
-    # index shift added since index is used as the time input of PVlib functions and using index is much easier
-    # than using a separate time column
-    df["time"] = df.index.copy()  # time backup
-    # timeshift has to be here
-    df.index = df.index + dt.timedelta(minutes=-30)
-
-    # Calculate instant from accumulated values (only radiation parameters)
-    diff = df.diff()
-    df['GHI'] = diff['GHI_accum'] / (60 * 60)
-    df['NetSW'] = diff['NetSW_accum'] / (60 * 60)
-    df['DirHI'] = diff['DirHI_accum'] / (60 * 60)
-    # GHI = grad_instant
-    # DirHI = swavr_instant
-    # netSW = nswrs_instant
-
-    # Calculate albedo (refl/ghi), refl=ghi-net
-    df['albedo'] = (df['GHI'] - df['NetSW']) / df['GHI']
-
-    # restricting abledo to be within range of 0 to 1
-    df['albedo'] = df['albedo'].mask(~df['albedo'].between(0, 1))
-
-    # setting all nan values to mean of known values
-    df['albedo'] = df['albedo'].fillna(df['albedo'].mean())
-
-    # Calculate Diffuse horizontal from global and direct
-    df['DHI'] = df['GHI'] - df['DirHI']
-    #
-
-    # Adding solar zenith angle to df
-    df["sza"] = get_solar_azimuth_zenit_fast(df.index, latitude, longitude)[1]
-    # solar zenit angle added
-
-    # Calculate dni from direct irradiance and sun angle
-    df['DNI'] = df['DirHI'] / np.cos(df['sza'] * (np.pi / 180))
-
-    # Keep the necessary parameters
-    df = df[['DNI', 'DHI', 'GHI', 'DirHI', 'albedo',
-             'T', 'Wind speed', 'Total cloud cover']]
-
-    df.columns = ["dni", "dhi", "ghi", "dir_hi", "albedo", "T", "wind", "cloud_cover"]
-    df = df.drop('dir_hi', axis=1)
-
-
-    # restricting values to zero
-    clip_columns = ["dni", "dhi", "ghi"]
-    df[clip_columns] = df[clip_columns].clip(lower=0.0)
-    df.replace(-0.0, 0.0, inplace=True)
-
-    # timeshift should not be done here, leaving as a comment for debugging reasons as this seems to cause all kinds
-    # of odd symptoms in the PV model pipeline
-    # df.index = df.index + dt.timedelta(minutes=-30)
-
-    if cache_enabled:
-        cached_data = df
-        last_load_time = time_now
+    # creating dataframe from xml with helper function
+    df = main_xml_to_df(response_xml)
 
     return df
 
+def main_xml_to_df(xml_string):
+    """
+    This function parses
+    :param str:
+    :return:
+    """
+
+
+    root = ET.fromstring(xml_string)
+
+    ns = {
+        "gmlcov": "http://www.opengis.net/gmlcov/1.0",
+        "gml": "http://www.opengis.net/gml/3.2",
+        "swe": "http://www.opengis.net/swe/2.0"
+    }
+
+    # --- 1. Extract timestamps from gmlcov:positions ---
+    pos_elem = root.find(".//gmlcov:positions", ns)
+
+    timestamps = []
+    for line in pos_elem.text.strip().splitlines():
+        parts = line.split()
+        epoch = int(parts[-1])  # last column is timestamp
+        timestamps.append(datetime.fromtimestamp(epoch, UTC))
+
+    # --- 2. Extract field names from swe:field ---
+    fields = root.findall(".//swe:field", ns)
+    field_names = [f.attrib["name"] for f in fields]
+
+    # --- 3. Extract values from doubleOrNilReasonTupleList ---
+    values_elem = root.find(".//gml:doubleOrNilReasonTupleList", ns)
+
+    rows = []
+    for line in values_elem.text.strip().splitlines():
+        values = list(map(float, line.split()))
+        rows.append(values)
+
+    # --- 4. Build DataFrame ---
+    df = pd.DataFrame(rows, columns=field_names)
+    df.insert(0, "timestamp", timestamps)
+
+    df.index = df["timestamp"]
+
+    # these are the columns we will eventually create,
+    # these should be from here:
+    # ['dni', 'dhi', 'ghi', 'albedo', 'T', 'wind', 'cloud_cover',
+    #
+    # these are calculated later:
+    # 'dni_poa', 'dhi_poa', 'ghi_poa', 'poa', 'dni_rc', 'dhi_rc', 'ghi_rc',
+    # 'poa_ref_cor', 'module_temp', 'output']
+
+    # some values are accumulated, need to calculate diff to get the accumulated values:
+    diff = df.diff()
+    df['ghi'] = diff['RadiationGlobalAccumulation'] / (60 * 60)
+    df['netsw'] = diff['RadiationNetSurfaceSWAccumulation'] / (60 * 60)
+    df['dirhi'] = diff['RadiationSWAccumulation'] / (60 * 60)
+
+    # calculating ground reflectivity
+    df["albedo"] = (df["ghi"] -df["netsw"])/df["ghi"]
+
+    # albedo can be a bit wonky with values outside range 0 to 1
+    # this section replaces values outside valid range with nan, and sets values naxt to these nans as nans
+    # finally interpolating linearly
+
+    df["albedo"] = df["albedo"].where(
+        (df["albedo"] >= 0) & (df["albedo"] <= 1),
+        np.nan
+    )
+
+    nan_mask = df["albedo"].isna()
+
+    neighbor_mask = (
+            nan_mask |
+            nan_mask.shift(1, fill_value=False) |
+            nan_mask.shift(-1, fill_value=False)
+    )
+
+    df["albedo"] = df["albedo"].mask(neighbor_mask)
+    df["albedo"] = df["albedo"].interpolate(method="linear", limit_direction="both")
+
+
+    # calculating atmopsheric scattering
+    df["dhi"] = df["ghi"]-df["dirhi"]
+
+    # solar zenith angle for dni calculations
+    df["sza"] = get_solar_azimuth_zenit_fast(df.index, 64, 25)[1]
+
+    # Calculate dni from dhi and sun angle
+    df['dni'] = df['dirhi'] / np.cos(df['sza'] * (np.pi / 180))
+
+
+    # creating export DF and adding variables to it
+    df_out = pd.DataFrame()
+    df_out["dni"] = df["dni"]
+    df_out["dhi"] = df["dhi"]
+    df_out["ghi"] = df["ghi"]
+    df_out["wind"] = df["WindSpeedMS"]
+    df_out["T"] = df["Temperature"]
+    df_out["cloud_cover"] = df["TotalCloudCover"]
+    df_out["albedo"] = df["albedo"]
+    df_out.index.name = "Time"
+
+    # restricting values to zero
+    clip_columns = ["dni", "dhi", "ghi"]
+    df_out[clip_columns] = df_out[clip_columns].clip(lower=0.0)
+    df_out.replace(-0.0, 0.0, inplace=True)
+
+    # export df should now have all needed variables
+    return df_out
+
+def get_solar_azimuth_zenit_fast(sim_dt: datetime, latitude, longitude):
+    """
+    This function exists elsewhere in the system, but keeping a local copy in this file just to keep everything
+    contained. Inputs are time and geolocation in wgs84 format.
+    """
+
+    # panel location and installation parameters from config file
+    panel_latitude = latitude
+    panel_longitude = longitude
+
+    # panel location object, required by pvlib
+    panel_location = location.Location(panel_latitude, panel_longitude)
+
+    # solar position object
+    solar_position = panel_location.get_solarposition(sim_dt)
+
+    # apparent zenith and azimuth, Using apparent for zenith as the atmosphere affects sun elevation.
+    # apparent_zenith = Sun zenith as seen and observed from earth surface
+    # zenith = True Sun zenith, would be observed if Earth had no atmosphere
+    solar_apparent_zenith = solar_position["apparent_zenith"]
+    solar_azimuth = solar_position["azimuth"]
+
+    return solar_azimuth, solar_apparent_zenith
 
 def __get_irradiance_pvlib(latitude, longitude, date_start: datetime, date_end: datetime,
-                           minutes_between_measurements=60) -> pandas.DataFrame:
+                           minutes_between_measurements=60) -> pd.DataFrame:
     """
     PVlib based clear sky irradiance modeling
     :param date: Datetime object containing a date
@@ -291,3 +289,4 @@ def __get_irradiance_pvlib(latitude, longitude, date_start: datetime, date_end: 
 
     # returning clearsky irradiance df
     return clearsky
+

@@ -741,7 +741,7 @@ def get_fmi_radiation_forecast():
 
 
 
-    data = meps_loader.collect_fmi_opendata(site_latitude, site_longitude, interval_start, interval_end)
+    data = meps_loader.collect_fmi_opendata(site_latitude, site_longitude)
 
     return data
 

@@ -1,15 +1,18 @@
 # Bifacial modeling
-Version 0.1.2
+Version 0.1.3
 
 ---- 
 
 ## What are bifacial PV panels?
-Bifacial PV panels are panels that can absorb radiation from both sides. They have become a bit more 
+Bifacial PV panels are panels that can absorb radiation from both sides. This leads to higher theoretical PV output
+per panel, if the installation method and local conditions allow for it.
+
+Bifacial panels have become a bit more 
 common during the past few years and adding modeling of bifacial systems to our package is something we
 are actively working on.
 
-Bifacial panels are often used for vertical east/west facing installations. This allows for the two sides to have their
-optimal output roughly 12 hours apart, leading to more even PV output through the day.
+In ideal conditions, bifacial PV installations produce two output peaks which can be as far as 12 hours apart. This
+leads to more even output during the day which may be beneficial depending on the operator. 
 
 ## Enabling bifacial modeling
 

@@ -1,6 +1,6 @@
 # Package documentation 
 
-Version 0.1.2
+Version 0.1.3
 
 This file contains a rather verbose explanation of the functions available via this package.
 
@@ -61,10 +61,13 @@ Coordinates can be retrieved from google maps. When browsing around, your url wi
 
 Tilt and azimuth should be set to an accuracy of 1 degree if possible. Deviations higher than 5 degrees can cause
 noticeable modeling errors. If you have a method for plotting both forecasts and actual PV output, you can
-and should use the actual PV output for tuning the input parameters.
+and should use the actual PV output for tuning the input parameters. Even in our own "scientific" datasets,
+especially the azimuth angle has often had significant and output influencing deviation.
+
 
 Geolocation does not have to be exact and 1km from actual location is good enough. Even offsets of 5 kilometers
-should not make a big difference due to uncertainties in weather forecasts. 
+should not make a big difference due to uncertainties in weather forecasts. So if you are concerned about your privacy,
+the system doesn't need your exact location to perform reliably.
 
 ## 1.2. Optional input functions
 
@@ -88,7 +91,7 @@ pvfc.set_default_wind_speed(wind_ms)
 * degrees_C: Air temperature in Celsius. Overridden by "T" column in dataframe if column exists. Default is 20 degrees.
 * albedo: Ground reflectivity in range [0,1]. Use 0.15 for dark ground, 0.6 for snow. Overridden by "albedo"
   column in dataframe if column exists. Default is 0.15.
-* wind_ms: Wind speed in meters per second. Overridden by "wind" column in dataframe if column exists.
+* wind_ms: Wind speed in meters per second at 10meter elevation. Overridden by "wind" column in dataframe if column exists.
   Default value is 2.
 
 ---
@@ -175,8 +178,9 @@ pv_forecast = process_radiation_df(radiation_forecast)
 
 More info on the weather forecast API: [https://en.ilmatieteenlaitos.fi/open-data-manual-wfs-examples-and-guidelines](https://en.ilmatieteenlaitos.fi/open-data-manual-wfs-examples-and-guidelines) 
 
-And the python package used for accessing the API:
- [https://github.com/pnuu/fmiopendata](https://github.com/pnuu/fmiopendata)
+There's also a python package made for accessing the API that you can use in your own projects.
+ [https://github.com/pnuu/fmiopendata](https://github.com/pnuu/fmiopendata) The package by pnuu was previously used here, but it was dropped due to
+licensing.
 
 ### 2.1.2. Default FMI forecast
 
