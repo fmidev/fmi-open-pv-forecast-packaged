@@ -17,7 +17,7 @@ jobs:
       - uses: py-actions/flake8@v2
         with:
           ignore: "E265, E303, E501, W503, F824, E128, F841, E127, E126, E231"
-          exclude: "testfile1.py, testfile2.py, tests/LEGACY_pv_forecast_test.py"
+          exclude: "testfile1.py, testfile2.py"
           max-line-length: "120"
 
   test-radiation-forecast:
