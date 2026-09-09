@@ -39,12 +39,13 @@ into the package.
 
 ## Installing the package
 
-As of September 2026, this package is still in development phase. Package may already be available on Pypi. If not,
-you can download
-`fmi_pv_forecast-0.1.3-py3-none-any.whl` from the dist/ folder and install it into your
-python environment. This can be done with the command
-`pip install --force-reinstall wheel fmi_pv_forecast-0.1.3-py3-none-any.whl`
-After package is installed, it can be imported as shown in the examples.
+This package is now available via pypi as `fmi-pv-forecaster` After installation, the package can be imported with
+`import fmi_pv_forecaster` as shown in the examples. 
+
+Alternatively, you can also download
+`fmi_pv_forecaster-0.1.3-py3-none-any.whl` from `/dist` -folder and install it with 
+`pip install --force-reinstall wheel fmi_pv_forecast-0.1.3-py3-none-any.whl`.
+
 ---
 
 ## Version history:
@@ -90,7 +91,7 @@ These forecasts do not have geographical restrictions, and they can be computed 
 time resolution. Another benefit is that computing them does not require internet access.
 
 The downsides of clear sky forecasts are the complete lack of weather-awareness. The PV model requires air temperature
-and wind speed values which must be manually fed to the system for clear sky forecasts to be computable. A good
+and wind speed(at 10 meters) values which must be manually fed to the system for clear sky forecasts to be computable. A good
 air temperature would be equal to the expected air temperature during peak production hours for the interval. Given wind
 value depends on the PV site and experienced weather. 2m/s is a fairly good default value, but values higher
 or lower can be used if panels are sheltered or exposed or if the location is particularly windy.
