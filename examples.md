@@ -1,4 +1,4 @@
-This document has examples on how to use the python package version 0.1.3.
+This document has examples on how to use the python package version 0.1.4.
 
 **Table of contents**
 <!-- TOC -->

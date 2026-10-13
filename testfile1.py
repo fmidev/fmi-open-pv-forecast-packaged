@@ -16,6 +16,8 @@ pvfc.set_extended_output(True)
 
 pvfc.set_snow_sliding(True)
 
+
+
 data = pvfc.get_default_fmi_forecast()
 dataB = pvfc.get_default_fmi_forecast(interpolate="15min")
 

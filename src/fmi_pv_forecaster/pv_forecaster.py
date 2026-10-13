@@ -29,6 +29,7 @@ power_rating = 1  # power in kw
 
 timezone = "UTC"
 
+print("Using local pvfc")
 
 def print_info():
     print("System location(WGS84): " + str(site_latitude) + ", " + str(site_longitude) + ".")

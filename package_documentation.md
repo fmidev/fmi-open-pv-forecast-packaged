@@ -1,6 +1,6 @@
 # Package documentation 
 
-Version 0.1.3
+Version 0.1.4
 
 This file contains a rather verbose explanation of the functions available via this package.
 

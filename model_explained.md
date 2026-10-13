@@ -1,5 +1,5 @@
 # PV model explained 
-Version 0.1.3
+Version 0.1.4
 
 This document explains the steps of the PV model. The document is split into two sections, model overview for those who
 would like to understand the basics and a more detailed description for those who want to use the model in research

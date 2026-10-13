@@ -120,13 +120,14 @@ def collect_fmi_opendata(latitude: float, longitude: float) -> pd.DataFrame:
     response_xml = response.text
 
     # creating dataframe from xml with helper function
-    df = main_xml_to_df(response_xml)
+    df = main_xml_to_df(response_xml, latitude, longitude)
 
     return df
 
-def main_xml_to_df(xml_string):
+def main_xml_to_df(xml_string, latitude, longitude):
     """
-    This function parses
+    This function reads xml files and creates radiation dataframes from them. XML has to be following
+    the FMI open data forecast API compliant.
     :param str:
     :return:
     """
@@ -165,7 +166,7 @@ def main_xml_to_df(xml_string):
     df = pd.DataFrame(rows, columns=field_names)
     df.insert(0, "timestamp", timestamps)
 
-    df.index = df["timestamp"]
+    df.index = df["timestamp"] - timedelta(minutes=30)
 
     # these are the columns we will eventually create,
     # these should be from here:
@@ -209,7 +210,7 @@ def main_xml_to_df(xml_string):
     df["dhi"] = df["ghi"]-df["dirhi"]
 
     # solar zenith angle for dni calculations
-    df["sza"] = get_solar_azimuth_zenit_fast(df.index, 64, 25)[1]
+    df["sza"] = get_solar_azimuth_zenit_fast(df.index, latitude, longitude)[1]
 
     # Calculate dni from dhi and sun angle
     df['dni'] = df['dirhi'] / np.cos(df['sza'] * (np.pi / 180))

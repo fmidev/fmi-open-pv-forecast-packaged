@@ -1,7 +1,7 @@
 
 # FMI open pv forecast package
 
-Version: 0.1.3 - License: MIT
+Version: 0.1.4 - License: MIT
 
 The main functionality of this package is the PV forecasting tool which is a combination of the FMI PV model and
 weather forecasts from FMI open data. The resulting PV forecasting tool generates hourly weather-aware PV forecasts for
@@ -50,6 +50,8 @@ Alternatively, you can also download
 
 ## Version history:
 
+- 0.1.4 (2026-10-13) Quickfix. The package had lost time shifting in an important data retrieval function. Also
+one important function had fixed geolocations, which caused issues with forecasts further from Finland.
 - 0.1.3 (2026-09-08) New FMI open data retrieval code. Also updates to tests. Now the
 project should be fully MIT compliant.
 - 0.1.2 (2026-08-18) License switched from GPL 3.0 to MIT. 
