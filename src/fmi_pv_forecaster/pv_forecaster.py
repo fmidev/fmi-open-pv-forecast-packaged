@@ -653,7 +653,6 @@ def get_fmi_forecast_at_interpolated_time(given_time):
     return __interpolate_nearest_power_to_time_value(fmi_power_forecast, given_time)
 
 
-
 def __interpolate_nearest_power_to_time_value(power_df, time_value):
     """
     This column interpolates 2 nearest rows with linear interpolation and returns a single row which is the linear
@@ -663,33 +662,37 @@ def __interpolate_nearest_power_to_time_value(power_df, time_value):
     :return:
     """
 
-    minute = time_value.minute
+    time_value = pd.Timestamp(time_value)
 
-    timestamp1 = None
-    timestamp2 = None
+    # Match the timezone of the DataFrame index.
+    index_tz = power_df.index.tz
 
-    if minute < 30:
-        timestamp1 = (datetime.datetime(time_value.year, time_value.month, time_value.day, time_value.hour, 30)
-                      - datetime.timedelta(minutes=60))
-        timestamp2 = datetime.datetime(time_value.year, time_value.month, time_value.day, time_value.hour, 30)
+    if index_tz is not None:
+        if time_value.tzinfo is None:
+            time_value = time_value.tz_localize(index_tz)
+        else:
+            time_value = time_value.tz_convert(index_tz)
+    elif time_value.tzinfo is not None:
+        time_value = time_value.tz_localize(None)
 
-    elif minute >= 30:
-        timestamp1 = datetime.datetime(time_value.year, time_value.month, time_value.day, time_value.hour,
-                                       30)
-        timestamp2 = (datetime.datetime(time_value.year, time_value.month, time_value.day, time_value.hour, 30)
-                      + datetime.timedelta(minutes=60))
+    # Find the surrounding hh:30 timestamps.
+    base_timestamp = time_value.replace(minute=30, second=0, microsecond=0)
 
-    # distances between given time value and surrounding values
+    if time_value.minute < 30:
+        timestamp1 = base_timestamp - pd.Timedelta(hours=1)
+        timestamp2 = base_timestamp
+    else:
+        timestamp1 = base_timestamp
+        timestamp2 = base_timestamp + pd.Timedelta(hours=1)
 
+    # Check that both timestamps exist in the index.
     if timestamp1 not in power_df.index or timestamp2 not in power_df.index:
         return None
 
-    # print("timevalue:" + str(time_value))
-    # print("timestamp1:" + str(timestamp1))
-    # print("timestamp2:" + str(timestamp2))
-    time_from1 = time_value - timestamp1  # a = X_pos - A_pos
-    time_from2 = timestamp2 - time_value  # b = B_pos- X_pos
-    total_time = time_from1 + time_from2  # C = a+b
+    # Calculate interpolation weights.
+    total_time = timestamp2 - timestamp1
+    fractional_distance_from1 = (timestamp2 - time_value) / total_time
+    fractional_distance_from2 = (time_value - timestamp1) / total_time
 
     # A                         B
     # o------X------------------o
@@ -701,20 +704,17 @@ def __interpolate_nearest_power_to_time_value(power_df, time_value):
     # a = 0.1, b = 0.9
     # X = A*(0.9) + B*(0.1)
 
-    # multipliers, fractional inverses, (1-a/c)
-    fractional_distance_from1 = 1 - time_from1 / total_time  # 1-a/C
-    fractional_distance_from2 = 1 - time_from2 / total_time  # 1-b/C
+    # Retrieve the rows.
+    row1 = power_df.loc[timestamp1]
+    row2 = power_df.loc[timestamp2]
 
-    # rows between which to interpolate
-    row1 = power_df.loc[str(timestamp1)].copy()
-    row2 = power_df.loc[str(timestamp2)].copy()
+    # Linear interpolation.
+    interpolated_row = (
+            row1 * fractional_distance_from1
+            + row2 * fractional_distance_from2
+    )
 
-    # interpolated row
-    interpolated_row = row1 * fractional_distance_from1 + row2 * fractional_distance_from2
-
-    # returning interpolated value
     return interpolated_row
-
 
 
 def get_fmi_radiation_forecast():

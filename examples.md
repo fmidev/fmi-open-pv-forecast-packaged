@@ -323,7 +323,7 @@ pvfc.set_default_albedo(0.2)
 date_start = datetime.datetime(2021, 5, 30, 0, 0)
 date_end = datetime.datetime(2021, 5, 30, 23, 59)
 
-data = pvfc.get_clearsky_estimate_for_interval(date_start, date_end, 1)
+data = pvfc.get_clearsky_forecast_for_interval(date_start, date_end, 1)
 # ^ final input variable here chooses the time between measurements in minutes. 1 results in really smooth plots
 
 # plotting forecast
