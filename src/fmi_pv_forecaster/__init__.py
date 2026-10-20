@@ -3,6 +3,7 @@
 # debug
 from .pv_forecaster import force_clear_fmi_cache
 from .pv_forecaster import get_clearsky_forecast_for_interval
+from .pv_forecaster import print_info
 # Forecast functions
 from .pv_forecaster import get_default_fmi_forecast
 from .pv_forecaster import get_fmi_forecast_at_interpolated_time
@@ -26,6 +27,10 @@ from .pv_forecaster import set_bifacial
 # optional system parameters
 from .pv_forecaster import set_module_elevation
 from .pv_forecaster import set_nominal_power_kw
+from .pv_forecaster import set_panel_reflectivity_model_constant
+from .pv_forecaster import set_panel_temperature_model_constants
+from .pv_forecaster import set_output_model_constants
+
 
 __all__ = [
     # system parameters
@@ -36,6 +41,11 @@ __all__ = [
     # optional system parameters
     "set_module_elevation",
     "set_relative_bifacial_backside_efficiency",
+
+    # model value adjustments
+    "set_panel_reflectivity_model_constant",
+    "set_panel_temperature_model_constants",
+    "set_output_model_constants",
 
     # clearsky system parameters
     "set_default_albedo",
@@ -60,7 +70,9 @@ __all__ = [
     "process_radiation_df",
 
     # debug
-    "force_clear_fmi_cache"
+    "force_clear_fmi_cache",
+    "print_info"
+
 ]
 
 __version__ = "0.1.4"

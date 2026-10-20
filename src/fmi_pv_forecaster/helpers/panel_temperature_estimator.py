@@ -10,6 +10,9 @@ import pandas
 
 from fmi_pv_forecaster.helpers import default_parameters
 
+# King 2004 constants
+constant_a = -3.47
+constant_b = -0.0594
 
 def add_estimated_panel_temperature(df: pandas.DataFrame) -> pandas.DataFrame:
     """
@@ -68,10 +71,6 @@ def temperature_of_module(absorbed_radiation: float, wind: float,
     Photovoltaic Array Performance Model Vol. 8,
     PhD thesis (Sandia National Laboratories, 2004).
     """
-
-    # two empirical constants
-    constant_a = -3.47
-    constant_b = -0.0594
 
     # wind is sometimes given as west/east components
 

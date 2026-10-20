@@ -32,11 +32,58 @@ timezone = "UTC"
 print("Using local pvfc")
 
 def print_info():
-    print("System location(WGS84): " + str(site_latitude) + ", " + str(site_longitude) + ".")
-    print("Panel angles: " + str(panel_tilt) + ", " + str(panel_azimuth) + ".")
-    print("System power: " + str(power_rating))
-    print("Timezone: " + str(timezone))
-    print("Extended output: " + str(extended_output))
+    """
+    This function prints the parameters of the model. Useful for debugging and research.
+    """
+
+
+    ### Common bits go here
+    print("--- System information ---")
+    print("System location(WGS84): " + str(site_latitude) + "°, " + str(site_longitude) + "°")
+    if panel_tilt is not None and panel_azimuth is not None:
+        print("Panel angles: " + str(panel_tilt) + "°, " + str(panel_azimuth) + "°")
+    else:
+        print("Panel angles: None")
+    print("System power: " + str(power_rating) +"kW")
+
+    ### Extra toggles and if they are on or not
+    print("-- Extra options --")
+    if extended_output:
+        print("Extended output: ON")
+    else:
+        print("Extended output: OFF")
+
+    if bifacial:
+        print("Bifacial modeling: ON")
+        print("Backside efficiency: " + str(backside_efficiency))
+    else:
+        print("Bifacial modeling: OFF")
+
+
+    ###
+    print("-- Model parameters --")
+
+    mr_string = "Panel reflectivity constant (Martin & Ruiz 2001): " + str(reflection_estimator.reflectance_constant)
+
+    print(mr_string)
+
+    king_string = ("Panel temperature coefficients (King 2004): "
+                   + "a=" + str(panel_temperature_estimator.constant_a)
+                   + ", b=" + str(panel_temperature_estimator.constant_b))
+    print(king_string)
+
+    huld_string = ("System efficiency coefficients (Huld 2010): ["
+                    + str(output_estimator.k1) + ", "
+                    + str(output_estimator.k2) + ", "
+                    + str(output_estimator.k3) + ", "
+                    + str(output_estimator.k4) + ", "
+                    + str(output_estimator.k5) + ", "
+                    + str(output_estimator.k6) + "]")
+    print(huld_string)
+
+    print("--- System information ends ---")
+
+
 
 
 def print_full(x: pandas.DataFrame):
@@ -272,6 +319,85 @@ def set_snow_sliding(snow_on):
     """
     global snow_slide_modeling
     snow_slide_modeling = snow_on
+
+def set_panel_reflectivity_model_constant(new_reflectivity_value : float):
+    """
+    Sets panel reflectivity constant used by martin&ruiz 2001 model. Reflectivity
+    constant has to be between 0 and 1.
+
+    Set to "None" to return default value for polycrystalline panels.
+    """
+
+    if new_reflectivity_value is None:
+        reflection_estimator.reflectance_constant = 0.159
+    elif type(new_reflectivity_value) is not float:
+        raise TypeError("new_reflectivity value should be a float")
+    elif new_reflectivity_value < 0 or new_reflectivity_value > 1:
+        raise ValueError("Reflectivity value must be between 0 and 1")
+    else:
+        reflection_estimator.reflectance_constant = new_reflectivity_value
+
+def set_panel_temperature_model_constants(a: float, b: float):
+    """
+    This function sets constants used by King 2004 panel temperature model.
+    Higher values(closer to zero as these should always be negative) for a and b result in higher modeled panel
+    temperatures. Constant b deals with wind derived cooling. Constant a handles the rest.
+
+    Default values are for polycrystalline panels. Set to "None" to return defaults.
+    """
+
+    if a is None:
+        panel_temperature_estimator.constant_a = -3.47
+    else:
+        panel_temperature_estimator.constant_a = a
+
+    if b is None:
+        panel_temperature_estimator.constant_b = -0.0594
+    else:
+        panel_temperature_estimator.constant_b = b
+
+def set_output_model_constants(constants: list, min_efficiency = 0.5, max_efficiency = 1.0):
+    """
+    This functions sets the 6 Huld model constants from user given list.
+    Set list to None to return default values.
+
+    Default values are the original huld values for crystalline silicon panels.
+
+    """
+
+    if constants is None:
+        output_estimator.k1 = -0.017162
+        output_estimator.k2 = -0.040289
+        output_estimator.k3 = -0.004681
+        output_estimator.k4 = 0.000148
+        output_estimator.k5 = 0.000169
+        output_estimator.k6 = 0.000005
+    elif type(constants) is not list:
+        raise ValueError("Constants must be given as a list.")
+    elif len(constants) != 6:
+        raise ValueError("Output model constants must have 6 values.")
+    else:
+        output_estimator.k1 = constants[0]
+        output_estimator.k2 = constants[1]
+        output_estimator.k3 = constants[2]
+        output_estimator.k4 = constants[3]
+        output_estimator.k5 = constants[4]
+        output_estimator.k6 = constants[5]
+
+
+    if min_efficiency is None:
+        output_estimator.min_efficiency = 0.5
+    elif type(min_efficiency) is float and min_efficiency >= 0 and min_efficiency <= 1.0:
+        output_estimator.min_efficiency = min_efficiency
+    else:
+        raise ValueError("Min_efficiency must be between 0 and 1, or \"None\" which resets back to 0.5.")
+
+    if max_efficiency is None:
+        output_estimator.max_efficiency = 1.0
+    elif type(max_efficiency) is float and max_efficiency >= 0 and max_efficiency <= 1.0:
+        output_estimator.max_efficiency = max_efficiency
+    else:
+        raise ValueError("Max_efficiency must be between 0 and 1, or \"None\" which resets back to 1.0",)
 
 
 

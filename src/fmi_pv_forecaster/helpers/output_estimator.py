@@ -15,6 +15,18 @@ from . import default_parameters
 
 rated_power = 1  # kw rating
 
+# huld constants
+k1 = -0.017162
+k2 = -0.040289
+k3 = -0.004681
+k4 = 0.000148
+k5 = 0.000169
+k6 = 0.000005
+
+# efficiency limits
+min_efficiency = 0.5
+max_efficiency = 1.0
+
 
 def print_full(x: pandas.DataFrame):
     """
@@ -93,18 +105,9 @@ def __estimate_output(absorbed_radiation: float, panel_temp: float) -> numpy.flo
     :return: Estimated system output in watts.
     """
 
-    min_efficiency = 0.5
-    max_efficiency = 1.0
 
-    # huld 2010 constants
-    k1 = -0.017162
-    k2 = -0.040289
-    k3 = -0.004681
-    k4 = 0.000148
-    k5 = 0.000169
-    k6 = 0.000005
 
-    # hud et al equation:
+    # huld et al equation:
 
     # main equation:
     # output = rated_power*nrad*efficiency

@@ -106,3 +106,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install . pytest
       - run: pytest tests/forecast_tests.py -s
+
+  test-model-constant-adjjustments:
+    # testing if actual full forecasts works, or rather do not crash as their testing is really complex. Other tests
+    # should have picked up failures if something major exists.
+    runs-on: ubuntu-latest
+    name: Testing if model adjustments work as intended
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python -m pip install --upgrade pip
+          pip install . pytest
+      - run: pytest tests/model_constant_adjusment_tests.py -s
