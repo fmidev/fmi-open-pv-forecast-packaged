@@ -50,6 +50,7 @@ Alternatively, you can also download
 
 ## Version history:
 
+- 0.1.5 (Work in progress) Reflection, temperature and efficiency model adjustments.
 - 0.1.4 (2026-10-13) Quickfix. The package had lost time shifting in an important data retrieval function. Also
 one important function had fixed geolocations, which caused issues with forecasts further from Finland.
 - 0.1.3 (2026-09-08) New FMI open data retrieval code. Also updates to tests. Now the

@@ -452,3 +452,95 @@ plt.show()
 **Resulting plot:**
 
 <img src="readme_images/multipanel_example.png" height="300"/>
+
+---
+
+## Example 7. Checking and modifying PV model parameters
+
+For use in research, having the ability to access and modify the model parameters can be helpful. The package has in-built
+functions for this purpose.
+
+### Checking parameters
+
+````python
+import fmi_pv_forecaster as pvfc
+
+# Setting system parameters
+pvfc.set_location(65, 25)
+pvfc.set_angles(15, 135)
+pvfc.set_nominal_power_kw(6)
+
+data = pvfc.get_default_fmi_forecast()
+
+pvfc.print_info() #this line prints out system info listing shown below
+````
+
+**Resulting print:**
+
+````commandline
+--- System information ---
+System location(WGS84): 65°, 25°
+Panel angles: 15°, 135°
+System power: 6kW
+-- Extra options --
+Extended output: OFF
+Bifacial modeling: OFF
+-- Model parameters --
+Panel reflectivity constant (Martin & Ruiz 2001): 0.159
+Panel temperature constants (King 2004): a=-3.47, b=-0.0594
+System efficiency constants (Huld 2011): [-0.017162, -0.040289, -0.004681, 0.000148, 0.000169, 5e-06]
+--- System information ends ---
+````
+
+### Modifying parameters
+```python
+# Setting to match monocrystralline silicon
+pvfc.set_panel_reflectivity_model_constant(0.169)
+
+# setting values to match glass open rack panels
+pvfc.set_panel_temperature_model_constants(-3.47, -0.0594)
+
+# setting Huld fitting coefficients and efficiency min/max
+huld_params = [-0.02, -0.06, -0.003, 0.001, 0.00005, 0.0000020]
+pvfc.set_output_model_constants(huld_params, min_efficiency=0.1, max_efficiency=1.0)
+```
+The models used here are:
+1. Martin&Ruiz 2001 "Calculation of the PV modules angular losses under field conditions by means of an analytical model"
+2. King 2004 "Photovoltaic Array Performance Model"
+3. Huld 2011 "A power-rating model for crystalline silicon PV modules" https://rmets.onlinelibrary.wiley.com/doi/10.1002/met.2201
+
+
+### Model parameter values
+This listing contains the default values and when available, provides lists of alternative values to try out.
+Default values are **bold**.
+
+#### Reflection constant
+|                         | a_r |
+|-------------------------|-------|
+| Monocrystalline silicon | 0.169 |
+| Polycrystalline silicon | **0.159** |
+| Amorphous silicon       | 0.163 |
+
+#### Temperature constants
+
+|                    | Mounting          | a[-inf, 0]     | b [-inf, 0] |
+|--------------------|-------------------|-------|---------|
+| Glass cell glass   | Open rack         | -3.47 | -0.0594 |
+|                    | Close roof mount  | **-2.98** | **-0.0471** |
+| Glass cell polymer | Open rack         | -3.56 | -0.075  |
+|                    | Close roof mouint | -2.81 | -0.0455 |
+| Polymer Thin film  | Open rack         | -3.58 | -0.113  |
+
+#### Efficiency constants
+
+|    | Huld model coefficients |
+|----|----------------------|
+| k1 | **-0.017162**            |
+| k2 | **-0.040289**            |
+| k3 | **-0.004681**            |
+| k4 | **0.000148**             |
+| k5 | **0.000169**             |
+| k6 | **0.000005**             |
+
+Default efficiency limit is 0.5 to 1.0.
+

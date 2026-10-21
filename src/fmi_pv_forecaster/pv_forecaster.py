@@ -67,12 +67,12 @@ def print_info():
 
     print(mr_string)
 
-    king_string = ("Panel temperature coefficients (King 2004): "
+    king_string = ("Panel temperature constants (King 2004): "
                    + "a=" + str(panel_temperature_estimator.constant_a)
                    + ", b=" + str(panel_temperature_estimator.constant_b))
     print(king_string)
 
-    huld_string = ("System efficiency coefficients (Huld 2010): ["
+    huld_string = ("System efficiency constants (Huld 2011): ["
                     + str(output_estimator.k1) + ", "
                     + str(output_estimator.k2) + ", "
                     + str(output_estimator.k3) + ", "

@@ -37,7 +37,7 @@ huld_params = [-0.02, -0.06, -0.003, 0.001, 0.00005, 0.0000020]
 # 3 setters
 pvfc.set_panel_reflectivity_model_constant(0.5)
 pvfc.set_panel_temperature_model_constants(-2, -0.54)
-pvfc.set_output_model_constants(huld_params)
+pvfc.set_output_model_constants(huld_params, min_efficiency=0.1, max_efficiency=1.0)
 
 # printing model data
 pvfc.print_info()
