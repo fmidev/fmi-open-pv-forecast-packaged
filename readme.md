@@ -1,7 +1,7 @@
 
 # FMI open pv forecast package
 
-Version: 0.1.4 - License: MIT
+Version: 0.1.5 - License: MIT
 
 The main functionality of this package is the PV forecasting tool which is a combination of the FMI PV model and
 weather forecasts from FMI open data. The resulting PV forecasting tool generates hourly weather-aware PV forecasts for
@@ -43,14 +43,16 @@ This package is now available via pypi as `fmi-pv-forecaster` After installation
 `import fmi_pv_forecaster` as shown in the examples. 
 
 Alternatively, you can also download
-`fmi_pv_forecaster-0.1.3-py3-none-any.whl` from `/dist` -folder and install it with 
-`pip install --force-reinstall wheel fmi_pv_forecast-0.1.3-py3-none-any.whl`.
+`fmi_pv_forecaster-0.1.x-py3-none-any.whl` from `/dist` -folder and install it with 
+`pip install --force-reinstall wheel fmi_pv_forecast-0.1.x-py3-none-any.whl`.
 
 ---
 
 ## Version history:
 
-- 0.1.5 (Work in progress) Reflection, temperature and efficiency model adjustments.
+- 0.1.5 (2026-10-27) Users can now easily do reflection, temperature and efficiency model adjustments and check model
+parameters. Default parameters used by the models are now for monocrystalline roof mounted panels.
+
 - 0.1.4 (2026-10-13) Quickfix. The package had lost time shifting in an important data retrieval function. Also
 one important function had fixed geolocations, which caused issues with forecasts further from Finland.
 - 0.1.3 (2026-09-08) New FMI open data retrieval code. Also updates to tests. Now the

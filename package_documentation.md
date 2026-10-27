@@ -1,6 +1,6 @@
 # Package documentation 
 
-Version 0.1.4
+Version 0.1.5
 
 This file contains a rather verbose explanation of the functions available via this package.
 
@@ -316,7 +316,82 @@ significant modeling errors. The FMI radiation retrieval function handles this f
 
 PVlib clearsky forecasts do not have timing related issues as PVlib uses the exact times to calculate the radiation.
 
-# 3. Developmental functions
+# 3. Model parameter adjustment functions
+
+See also [example 7](examples.md#example-7-checking-and-modifying-pv-model-parameters) for more info.
+
+#### Model defaults
+The model assumes that the PV panels you are creating forecasts for are monocrystalline roof 
+mounted panels, something you'd see being used by most new PV installations on the roofs of houses.
+
+If you are using polycrystalline panels(typically blue-ish in color) or have panels mounted on racks which
+get more cooling from the wind, you can still use the default parameters and achieve good modeling accuracy
+in most cases as the differences are typically just a few percents.
+
+If however you want to do scientific research and if you have access to radiation measurements, you can tune the
+model. This section describes how that is done.
+
+
+## Adjusting model parameters
+The three main submodels in the modeling chain can be adjusted with the following functions.
+These parts describe how reflective the panels are, how they cool down and how their efficiency varies based
+on panel temperature. The following code example uses the models mentioned below.
+
+```python
+# Setting to match monocrystralline silicon
+pvfc.set_panel_reflectivity_model_constant(0.169)
+
+# setting values to match glass open rack panels
+pvfc.set_panel_temperature_model_constants(-3.47, -0.0594)
+
+# setting Huld fitting coefficients and efficiency min/max
+huld_params = [-0.02, -0.06, -0.003, 0.001, 0.00005, 0.0000020]
+pvfc.set_output_model_constants(huld_params, min_efficiency=0.1, max_efficiency=1.0)
+```
+
+1. Martin&Ruiz 2001 "Calculation of the PV modules angular losses under field conditions by means of an analytical model"
+2. King 2004 "Photovoltaic Array Performance Model"
+3. Huld 2010 "A power-rating model for crystalline silicon PV modules" https://rmets.onlinelibrary.wiley.com/doi/10.1002/met.2201
+
+
+
+## Alternative model parameter tables
+#### Reflection constant
+|                         | a_r |
+|-------------------------|-------|
+| Monocrystalline silicon | **0.169** |
+| Polycrystalline silicon | 0.159 |
+| Amorphous silicon       | 0.163 |
+
+#### Temperature constants
+
+|                    | Mounting          | a[-inf, 0]     | b [-inf, 0] |
+|--------------------|-------------------|-------|---------|
+| Glass cell glass   | Open rack         | -3.47 | -0.0594 |
+|                    | Close roof mount  | **-2.98** | **-0.0471** |
+| Glass cell polymer | Open rack         | -3.56 | -0.075  |
+|                    | Close roof mouint | -2.81 | -0.0455 |
+| Polymer Thin film  | Open rack         | -3.58 | -0.113  |
+
+#### Efficiency constants
+
+|    | Huld model coefficients |
+|----|----------------------|
+| k1 | **-0.017162**            |
+| k2 | **-0.040289**            |
+| k3 | **-0.004681**            |
+| k4 | **0.000148**             |
+| k5 | **0.000169**             |
+| k6 | **0.000005**             |
+
+Default efficiency limit is 0.5 to 1.0.
+
+
+**Note:** These values(except the efficiency limits), are from the original scientific papers which proposed
+said models in the first place. These papers are at least 15 years old and current generation PV panels
+may behave differently.
+
+# 4. Developmental functions
 
 The following is a listing of functions included in the package but which are not typically useful to users.
 

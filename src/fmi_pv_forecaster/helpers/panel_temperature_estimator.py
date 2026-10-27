@@ -10,9 +10,9 @@ import pandas
 
 from fmi_pv_forecaster.helpers import default_parameters
 
-# King 2004 constants
-constant_a = -3.47
-constant_b = -0.0594
+# King 2004 constants for close roof mounted glass covered silicon panels
+constant_a = -2.98
+constant_b = -0.0471
 
 def add_estimated_panel_temperature(df: pandas.DataFrame) -> pandas.DataFrame:
     """

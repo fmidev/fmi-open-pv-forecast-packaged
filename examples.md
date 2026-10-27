@@ -1,4 +1,4 @@
-This document has examples on how to use the python package version 0.1.4.
+This document has examples on how to use the python package version 0.1.5.
 
 **Table of contents**
 <!-- TOC -->
@@ -488,7 +488,7 @@ Bifacial modeling: OFF
 -- Model parameters --
 Panel reflectivity constant (Martin & Ruiz 2001): 0.159
 Panel temperature constants (King 2004): a=-3.47, b=-0.0594
-System efficiency constants (Huld 2011): [-0.017162, -0.040289, -0.004681, 0.000148, 0.000169, 5e-06]
+System efficiency constants (Huld 2010): [-0.017162, -0.040289, -0.004681, 0.000148, 0.000169, 5e-06]
 --- System information ends ---
 ````
 

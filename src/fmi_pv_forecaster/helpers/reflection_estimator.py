@@ -21,7 +21,7 @@ from fmi_pv_forecaster.helpers import astronomical_calculations
 # as uncoated panels would have a higher value. Dust on panels increases reflectance_constant.
 # 0.159 is given as an average value for polycrystalline silicon module reflectance
 # 0.169 is given in the same paper as monocrystalline reflectance
-reflectance_constant = 0.159
+reflectance_constant = 0.169
 
 
 def components_to_corrected_poa(DNI_component: float, DHI_component: float, GHI_component: float,

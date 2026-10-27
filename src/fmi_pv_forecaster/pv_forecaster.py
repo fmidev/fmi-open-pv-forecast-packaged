@@ -70,7 +70,7 @@ def print_info():
                    + ", b=" + str(panel_temperature_estimator.constant_b))
     print(king_string)
 
-    huld_string = ("System efficiency constants (Huld 2011): ["
+    huld_string = ("System efficiency constants (Huld 2010): ["
                     + str(output_estimator.k1) + ", "
                     + str(output_estimator.k2) + ", "
                     + str(output_estimator.k3) + ", "

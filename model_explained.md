@@ -1,5 +1,5 @@
 # PV model explained 
-Version 0.1.4
+Version 0.1.5
 
 This document explains the steps of the PV model. The document is split into two sections, model overview for those who
 would like to understand the basics and a more detailed description for those who want to use the model in research
@@ -494,10 +494,11 @@ stateDiagram-v2
 The diagram above tells us that we need an additional value AOI in order to compute the reflective losses from direct
 solar irradiance. AOI is the angle of incidence, and it tells us how far from the solar panel normal vector the ray
 angle
-of incoming sunlight is. AOI depends on the position of the Sun and it is calculated with functions included in PVlib.
+of incoming sunlight is. AOI depends on the position of the Sun, and it is calculated with functions included in PVlib.
+
 
 > PVlib returns apparent solar zenith and solar zenith when solar angles are requested. Apparent zenith takes the
-> influence of the atmosphere into account and it should be used.
+> influence of the atmosphere into account, and it should be used.
 
 With dhi and ghi the takeaways are that the location of the PV system, panel azimuth, time of day or solar angles do not
 matter. This is a result of simplifications in the dhi and ghi models. The only relevant parameters are the
@@ -507,6 +508,10 @@ plane of array irradiance and panel tilt angle.
 
 Martin & Ruiz 2001
 "Calculation of the PV modules angular losses under field conditions by means of an analytical model".
+
+By default the model uses monocrystalline reflection constant 0.169 from Martin&Ruiz paper. This value can be adjusted
+by the user. See [package documentation](package_documentation.md#adjusting-model-parameters) and 
+[example 7](examples.md#example-7-checking-and-modifying-pv-model-parameters).
 
 ---
 
@@ -607,6 +612,11 @@ D.~King, J.~Kratochvil, and W.~Boyson,
 Photovoltaic Array Performance Model Vol. 8,
 PhD thesis (Sandia Naitional Laboratories, 2004).
 
+By default, the model uses close to roof mounted glass covered silicon panel coefficients (-2.98, -0.0471) 
+from King 2004. These can be adjusted by the user.
+See [package documentation](package_documentation.md#adjusting-model-parameters) and 
+[example 7](examples.md#example-7-checking-and-modifying-pv-model-parameters).
+
 ---
 
 
@@ -658,7 +668,7 @@ model suggests so.
 Final output of the PV model is estimated by using Huld 2010 model. This same model is sometimes referred
 as the Huld 6k model as it has 6 constants, k1, k2 ... k6 which can be used to tune the model.
 
-The constants used are:
+The default constants used are as follows:
 
 ```python
 # huld 2010 constants
@@ -669,6 +679,9 @@ k4 = 0.000148
 k5 = 0.000169
 k6 = 0.000005
 ```
+See 
+[package documentation](package_documentation.md#adjusting-model-parameters) and 
+[example 7](examples.md#example-7-checking-and-modifying-pv-model-parameters) for how to adjust the Huld model coefficients.
 
 ```mermaid
 
