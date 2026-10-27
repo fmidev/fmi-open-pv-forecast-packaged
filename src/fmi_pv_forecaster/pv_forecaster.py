@@ -29,8 +29,6 @@ power_rating = 1  # power in kw
 
 timezone = "UTC"
 
-print("Using local pvfc")
-
 def print_info():
     """
     This function prints the parameters of the model. Useful for debugging and research.
