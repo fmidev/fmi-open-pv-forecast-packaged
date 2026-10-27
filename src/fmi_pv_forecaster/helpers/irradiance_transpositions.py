@@ -62,8 +62,8 @@ def irradiance_df_to_poa_df(irradiance_df: pandas.DataFrame, latitude, longitude
     if "albedo" in irradiance_df.columns:
         irradiance_df["ghi_poa"] = __project_ghi_to_panel_surface(irradiance_df["ghi"], tilt, irradiance_df["albedo"])
     else:
-        # print("Using constant albedo of " + str(fmi_pv_forecast.helpers.default_parameters.albedo) +".")
-        irradiance_df["ghi_poa"] = __project_ghi_to_panel_surface(irradiance_df["ghi"], tilt)
+        irradiance_df["albedo"] = fmi_pv_forecaster.helpers.default_parameters.albedo
+        irradiance_df["ghi_poa"] = __project_ghi_to_panel_surface(irradiance_df["ghi"], tilt, irradiance_df["albedo"])
 
     # adding the sum of projections to df as poa
     irradiance_df["poa"] = irradiance_df["dhi_poa"] + irradiance_df["dni_poa"] + irradiance_df["ghi_poa"]
@@ -159,8 +159,7 @@ def __project_dhi_to_panel_surface_perez_fast(time: datetime, dhi: float, dni: f
     return dhi_perez
 
 
-def __project_ghi_to_panel_surface(ghi: float, tilt: float,
-                                   albedo=fmi_pv_forecaster.helpers.default_parameters.albedo) -> float:
+def __project_ghi_to_panel_surface(ghi: float, tilt: float, albedo) -> float:
     """
     Equation from
     https://pvpmc.sandia.gov/modeling-guide/1-weather-design-inputs/plane-of-array-poa-irradiance/calculating-poa-irradiance/poa-ground-reflected/
@@ -170,6 +169,7 @@ def __project_ghi_to_panel_surface(ghi: float, tilt: float,
     :param ghi: Ground reflected solar irradiance.
     :return: Ground reflected solar irradiance hitting the solar panel surface.
     """
+
     step1 = (1.0 - math.cos(numpy.radians(tilt))) / 2
     step2 = ghi * albedo * step1
     return step2  # ghi * config.albedo * ((1.0 - math.cos(numpy.radians(config.tilt))) / 2.0)
