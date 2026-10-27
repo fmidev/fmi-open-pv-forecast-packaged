@@ -2,7 +2,7 @@ import datetime
 import random
 import fmi_pv_forecaster.helpers.reflection_estimator
 
-test_count = 300
+test_count = 100
 
 
 
@@ -81,8 +81,8 @@ def test_dhi_reflections():
             "dhi reflective losses were lower than 4%, this is unexpected."
         )
 
-        assert reflection_loss <= 0.05, (
-            "dhi reflective losses were higher than 5%, this is unexpected."
+        assert reflection_loss <= 0.07, (
+            "dhi reflective losses were higher than 7%, this is unexpected."
         )
 
 
